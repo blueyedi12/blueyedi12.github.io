@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Abyssal — a slither-style game</title>
+<title>slimy snake — a slither-style game</title>
 <style>
   :root{
     --deep-1:#04070d;
@@ -153,14 +153,14 @@
 
 <div id="rotateOverlay" class="hidden">
   <div class="icon">📱↻</div>
-  <p>Abyssal plays in landscape. Rotate your device sideways (or widen this window) to continue.</p>
+  <p>slimy snake plays in landscape. Rotate your device sideways (or widen this window) to continue.</p>
 </div>
 
 <!-- MAIN MENU -->
 <div id="menuScreen" class="screen">
   <div class="topbar"><span class="gem-badge"><span class="dot"></span><span id="menuGems">0</span> gems</span></div>
   <div class="title-wrap">
-    <h1 class="title">Abyssal</h1>
+    <h1 class="title">slimy snake</h1>
     <div class="subtitle">grow long, eat glow, don't touch anything</div>
   </div>
   <div class="menu-panel">
@@ -231,7 +231,7 @@
 "use strict";
 
 /* ============ STATE (persisted to localStorage) ============ */
-const SAVE_KEY = 'abyssal_save_v1';
+const SAVE_KEY = 'slimy_snake_save_v1';
 
 function defaultState(){
   return {
@@ -298,11 +298,11 @@ const SKINS = [
   {id:'default', name:'Kelp',       price:0,   colors:['#4be3d8','#2a8f8a']},
   {id:'ember',   name:'Ember',      price:60,  colors:['#e3844b','#a13c1f']},
   {id:'violet',  name:'Voidbloom', price:90,  colors:['#b04be3','#5b2189']},
-  {id:'gold',    name:'Gilded',    price:150, colors:['#e3c04b','#8a6a15']},
+  {id:'gold',    name:'Gilded',     price:150, colors:['#e3c04b','#8a6a15']},
   {id:'rose',    name:'Anemone',   price:150, colors:['#e34b8f','#8a2158']},
   {id:'ghost',   name:'Ghostfin',  price:220, colors:['#dfefee','#8fa6a4']},
   {id:'toxic',   name:'Toxin',     price:280, colors:['#a6e34b','#4d7015']},
-  {id:'abyss',   name:'Abyss King',price:400, colors:['#4b6be3','#101b3f']},
+  {id:'abyss',   name:'slimy snake King',price:400, colors:['#4b6be3','#101b3f']},
   {id:'solar',   name:'Solaris',   price:520, colors:['#ffdd6b','#ff7a3c']}
 ];
 
@@ -827,110 +827,12 @@ function drawGems(){
     if(sx<-20||sx>viewW+20||sy<-20||sy>viewH+20) continue;
     ctx.beginPath();
     ctx.fillStyle = '#e3b74b';
-    ctx.shadowColor = '#e3b74b';
-    ctx.shadowBlur = 10;
-    ctx.arc(sx, sy, g.r, 0, Math.PI * 2);
+    ctx.shadowColor = '#e3b74b'; ctx.shadowBlur=10;
+    ctx.arc(sx,sy,g.r,0,Math.PI*2);
     ctx.fill();
   }
-  ctx.shadowBlur = 0;
+  ctx.shadowBlur=0;
 }
-
-function drawWorldBorder(){
-  const cx = window.innerWidth / 2 - player.x;
-  const cy = window.innerHeight / 2 - player.y;
-  ctx.beginPath();
-  ctx.arc(cx, cy, WORLD_R, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(75, 227, 216, 0.3)';
-  ctx.lineWidth = 4;
-  ctx.stroke();
-}
-
-function updateLeaderboard(){
-  const sorted = [...snakes].sort((a,b) => b.segs.length - a.segs.length).slice(0, 5);
-  const lb = el('lbList');
-  lb.innerHTML = '';
-  sorted.forEach(s => {
-    const row = document.createElement('div');
-    row.className = 'row-item';
-    row.innerHTML = `<span>${s.name}</span><strong>${currentLength(s)}</strong>`;
-    lb.appendChild(row);
-  });
-}
-
-function updateHUD(){
-  const len = currentLength(player);
-  const lenEl = el('lenHud');
-  lenEl.textContent = len;
-  lenEl.classList.toggle('boosting', player.boosting);
-  el('boostTag').classList.toggle('show', player.boosting);
-  el('liveGems').textContent = state.gems;
-}
-
-/* ---------- MAIN GAME LOOP ---------- */
-let lastTime = performance.now();
-
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && running) {
-    lastTime = performance.now();
-  }
-});
-
-function gameLoop(now){
-  if(!running) return;
-
-  let dt = (now - lastTime) / 1000;
-  lastTime = now;
-
-  if (isNaN(dt) || dt < 0) dt = 0.016;
-  if (dt > 0.033) dt = 0.033;
-
-  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-  for(const s of snakes) updateSnake(s, dt);
-  checkCollisions();
-  for(const s of snakes) if(s.alive) feedCheck(s);
-
-  respawnAIIfNeeded();
-
-  if(food.length < FOOD_COUNT) spawnFood(FOOD_COUNT - food.length);
-
-  if(!player.alive){
-    running = false;
-    hide('hud'); hide('gemHud'); hide('leaderboard');
-    if(state.mode === 'mobile'){ hide('joystick'); hide('boostBtn'); }
-    el('deathStats').textContent = `Length ${currentLength(player)} — ${runGems} gems earned`;
-    show('deathScreen');
-    return;
-  }
-
-  drawWorldBorder();
-  drawFood();
-  drawGems();
-  for(const s of snakes) if(s.alive) drawSnake(s);
-
-  updateHUD();
-  updateLeaderboard();
-
-  requestAnimationFrame(gameLoop);
-}
-
-function startGame(){
-  food = []; gemsWorld = []; snakes = []; runGems = 0;
-  spawnFood(FOOD_COUNT);
-  player = makeSnake(true, state.playerName, state.selectedSkin);
-  snakes.push(player);
-  respawnAIIfNeeded();
-
-  hide('menuScreen'); hide('skinsScreen'); hide('shopScreen'); hide('deathScreen');
-  show('hud'); show('gemHud'); show('leaderboard');
-  if(state.mode === 'mobile'){ show('joystick'); show('boostBtn'); }
-
-  running = true;
-  lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
-}
-
-})();
 </script>
 </body>
 </html>
