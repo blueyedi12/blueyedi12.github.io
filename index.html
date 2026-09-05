@@ -258,8 +258,8 @@
 
   .close-x{
     position:relative;
-    z-index:9999;
-    pointer-events:auto;
+    z-index:999999;
+    pointer-events:auto !important;
     touch-action:manipulation;
     user-select:none;
     cursor:pointer;
@@ -571,8 +571,6 @@
   <p>Slimy Snake plays in landscape. Rotate your device sideways (or widen this window) to continue.</p>
 </div>
 
-<!-- MAIN MENU -->
-
 <div id="menuScreen" class="screen">
 
   <div class="topbar">
@@ -599,23 +597,23 @@
       value="Wanderer"
     >
 
-    <button class="btn primary" id="playBtn">
+    <button type="button" class="btn primary" id="playBtn">
       Play
     </button>
 
     <div class="row">
 
-      <button class="btn" id="skinsBtn">
+      <button type="button" class="btn" id="skinsBtn">
         Skins
       </button>
 
-      <button class="btn" id="shopBtn">
+      <button type="button" class="btn" id="shopBtn">
         Shop
       </button>
 
     </div>
 
-    <button class="btn ghost" id="modeToggleBtn">
+    <button type="button" class="btn ghost" id="modeToggleBtn">
       📱 Switch to Mobile Mode
     </button>
 
@@ -640,8 +638,6 @@
 
 </div>
 
-<!-- SKINS PANEL -->
-
 <div id="skinsScreen" class="screen hidden">
 
   <div class="menu-panel" style="width:min(560px,92vw)">
@@ -662,23 +658,15 @@
     </div>
 
     <div style="margin-bottom:12px" class="gem-badge">
-
       <span class="dot"></span>
-
       <span id="skinsGems">0</span> gems
-
     </div>
 
-    <div
-      class="grid"
-      id="skinGrid"
-    ></div>
+    <div class="grid" id="skinGrid"></div>
 
   </div>
 
 </div>
-
-<!-- SHOP PANEL -->
 
 <div id="shopScreen" class="screen hidden">
 
@@ -700,102 +688,61 @@
     </div>
 
     <div style="margin-bottom:6px" class="gem-badge">
-
       <span class="dot"></span>
-
       <span id="shopGems">0</span> gems
-
     </div>
 
     <div class="shop-timer">
-
       restocks in
-      <span id="shopTimer">
-        --:--:--
-      </span>
-
+      <span id="shopTimer">--:--:--</span>
     </div>
 
-    <div
-      class="shop-list"
-      id="shopList"
-    ></div>
+    <div class="shop-list" id="shopList"></div>
 
   </div>
 
 </div>
 
-<!-- IN-GAME HUD -->
-
 <div id="hud" class="hidden">
 
   length:
-  <span class="len" id="lenHud">
-    10
-  </span>
+  <span class="len" id="lenHud">10</span>
 
-  <span
-    class="boost-tag"
-    id="boostTag"
-  >
+  <span class="boost-tag" id="boostTag">
     BOOST
   </span>
 
 </div>
 
-<div
-  id="gemHud"
-  class="hidden gem-badge"
->
+<div id="gemHud" class="hidden gem-badge">
 
   <span class="dot"></span>
 
-  <span id="liveGems">
-    0
-  </span>
+  <span id="liveGems">0</span>
 
 </div>
 
-<div
-  class="leaderboard hidden"
-  id="leaderboard"
->
+<div class="leaderboard hidden" id="leaderboard">
 
-  <h4>
-    TOP SNAKES
-  </h4>
+  <h4>TOP SNAKES</h4>
 
   <div id="lbList"></div>
 
 </div>
 
-<div
-  id="joystick"
-  class="hidden"
->
+<div id="joystick" class="hidden">
 
   <div id="joystickKnob"></div>
 
 </div>
 
-<div
-  id="boostBtn"
-  class="hidden"
->
+<div id="boostBtn" class="hidden">
   BOOST
 </div>
 
-<!-- DEATH SCREEN -->
+<div id="deathScreen" class="screen hidden">
 
-<div
-  id="deathScreen"
-  class="screen hidden"
->
-
-  <div
-    class="menu-panel"
-    style="text-align:center"
-  >
+  <div class="menu-panel" style="text-align:center">
 
     <h2 id="deathTitle">
       You were cut short
@@ -805,17 +752,11 @@
       Length 0 — 0 gems earned
     </p>
 
-    <button
-      class="btn primary"
-      id="respawnBtn"
-    >
+    <button type="button" class="btn primary" id="respawnBtn">
       Play again
     </button>
 
-    <button
-      class="btn ghost"
-      id="menuBtn"
-    >
+    <button type="button" class="btn ghost" id="menuBtn">
       Main menu
     </button>
 
@@ -866,14 +807,10 @@ function loadState(){
   try{
 
     const raw =
-      localStorage.getItem(
-        SAVE_KEY
-      );
+      localStorage.getItem(SAVE_KEY);
 
     if(!raw){
-
       return defaultState();
-
     }
 
     const parsed =
@@ -894,16 +831,12 @@ function loadState(){
         d.selectedSkin,
 
       unlockedSkins:
-        Array.isArray(
-          parsed.unlockedSkins
-        )
+        Array.isArray(parsed.unlockedSkins)
           ? parsed.unlockedSkins
           : d.unlockedSkins,
 
       ownedShopItems:
-        Array.isArray(
-          parsed.ownedShopItems
-        )
+        Array.isArray(parsed.ownedShopItems)
           ? parsed.ownedShopItems
           : d.ownedShopItems,
 
@@ -945,9 +878,7 @@ function saveState(){
   try{
 
     localStorage.setItem(
-
       SAVE_KEY,
-
       JSON.stringify({
 
         gems:
@@ -972,7 +903,6 @@ function saveState(){
           state.mode
 
       })
-
     );
 
   }
@@ -999,14 +929,10 @@ const state = {
     loaded.selectedSkin,
 
   unlockedSkins:
-    new Set(
-      loaded.unlockedSkins
-    ),
+    new Set(loaded.unlockedSkins),
 
   ownedShopItems:
-    new Set(
-      loaded.ownedShopItems
-    ),
+    new Set(loaded.ownedShopItems),
 
   ownedShopDay:
     loaded.ownedShopDay,
@@ -1029,90 +955,63 @@ const SKINS = [
     id:'default',
     name:'Kelp',
     price:0,
-    colors:[
-      '#4be3d8',
-      '#2a8f8a'
-    ]
+    colors:['#4be3d8','#2a8f8a']
   },
 
   {
     id:'ember',
     name:'Ember',
     price:60,
-    colors:[
-      '#e3844b',
-      '#a13c1f'
-    ]
+    colors:['#e3844b','#a13c1f']
   },
 
   {
     id:'violet',
     name:'Voidbloom',
     price:90,
-    colors:[
-      '#b04be3',
-      '#5b2189'
-    ]
+    colors:['#b04be3','#5b2189']
   },
 
   {
     id:'gold',
     name:'Gilded',
     price:150,
-    colors:[
-      '#e3c04b',
-      '#8a6a15'
-    ]
+    colors:['#e3c04b','#8a6a15']
   },
 
   {
     id:'rose',
     name:'Anemone',
     price:150,
-    colors:[
-      '#e34b8f',
-      '#8a2158'
-    ]
+    colors:['#e34b8f','#8a2158']
   },
 
   {
     id:'ghost',
     name:'Ghostfin',
     price:220,
-    colors:[
-      '#dfefee',
-      '#8fa6a4'
-    ]
+    colors:['#dfefee','#8fa6a4']
   },
 
   {
     id:'toxic',
     name:'Toxin',
     price:280,
-    colors:[
-      '#a6e34b',
-      '#4d7015'
-    ]
+    colors:['#a6e34b','#4d7015']
   },
 
   {
     id:'abyss',
     name:'Abyss King',
     price:400,
-    colors:[
-      '#4b6be3',
-      '#101b3f'
-    ]
+    colors:['#4b6be3','#101b3f']
   },
 
   {
     id:'solar',
     name:'Solaris',
     price:520,
-    colors:[
-      '#ffdd6b',
-      '#ff7a3c'
-    ]
+    colors:['#ffdd6b','#ff7a3c']
   }
 
 ];
@@ -1216,8 +1115,7 @@ function mulberry32(a){
 function dayIndex(){
 
   return Math.floor(
-    Date.now() /
-    86400000
+    Date.now() / 86400000
   );
 
 }
@@ -1249,10 +1147,7 @@ function todaysShop(){
       );
 
     picks.push(
-      pool.splice(
-        idx,
-        1
-      )[0]
+      pool.splice(idx,1)[0]
     );
 
   }
@@ -1264,15 +1159,10 @@ function todaysShop(){
 function msUntilNextRestock(){
 
   const next =
-    (
-      dayIndex()+1
-    ) *
+    (dayIndex()+1) *
     86400000;
 
-  return (
-    next -
-    Date.now()
-  );
+  return next - Date.now();
 
 }
 
@@ -1281,8 +1171,7 @@ function msUntilNextRestock(){
 ========================================================= */
 
 const el =
-  id =>
-    document.getElementById(id);
+  id => document.getElementById(id);
 
 function hide(target){
 
@@ -1292,9 +1181,7 @@ function hide(target){
       : target;
 
   if(element){
-
     element.classList.add('hidden');
-
   }
 
 }
@@ -1307,9 +1194,7 @@ function show(target){
       : target;
 
   if(element){
-
     element.classList.remove('hidden');
-
   }
 
 }
@@ -1355,16 +1240,8 @@ function renderSkins(){
 
       card.className =
         'skin-card' +
-        (
-          owned
-            ? ''
-            : ' locked'
-        ) +
-        (
-          selected
-            ? ' selected'
-            : ''
-        );
+        (owned ? '' : ' locked') +
+        (selected ? ' selected' : '');
 
       card.innerHTML = `
 
@@ -1423,15 +1300,11 @@ function renderSkins(){
             state.gems >= s.price
           ){
 
-            state.gems -=
-              s.price;
+            state.gems -= s.price;
 
-            state.unlockedSkins.add(
-              s.id
-            );
+            state.unlockedSkins.add(s.id);
 
-            state.selectedSkin =
-              s.id;
+            state.selectedSkin = s.id;
 
             refreshGemDisplays();
 
@@ -1466,9 +1339,7 @@ function renderShop(){
     item => {
 
       const owned =
-        state.ownedShopItems.has(
-          item.id
-        );
+        state.ownedShopItems.has(item.id);
 
       const row =
         document.createElement('div');
@@ -1515,12 +1386,9 @@ function renderShop(){
               state.gems >= item.price
             ){
 
-              state.gems -=
-                item.price;
+              state.gems -= item.price;
 
-              state.ownedShopItems.add(
-                item.id
-              );
+              state.ownedShopItems.add(item.id);
 
               refreshGemDisplays();
 
@@ -1550,22 +1418,16 @@ function tickShopTimer(){
     msUntilNextRestock();
 
   const h =
-    Math.floor(
-      ms / 3600000
-    );
+    Math.floor(ms / 3600000);
 
   const m =
     Math.floor(
-      (
-        ms % 3600000
-      ) / 60000
+      (ms % 3600000) / 60000
     );
 
   const s =
     Math.floor(
-      (
-        ms % 60000
-      ) / 1000
+      (ms % 60000) / 1000
     );
 
   el('shopTimer').textContent =
@@ -1584,42 +1446,40 @@ setInterval(
    MAIN MENU BUTTONS
 ========================================================= */
 
-el('skinsBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('skinsBtn').addEventListener(
+  'click',
+  () => {
 
-      renderSkins();
+    renderSkins();
 
-      refreshGemDisplays();
+    refreshGemDisplays();
 
-      hide('menuScreen');
+    hide('menuScreen');
 
-      show('skinsScreen');
+    show('skinsScreen');
 
-    }
-  );
+  }
+);
 
-el('shopBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('shopBtn').addEventListener(
+  'click',
+  () => {
 
-      renderShop();
+    renderShop();
 
-      refreshGemDisplays();
+    refreshGemDisplays();
 
-      tickShopTimer();
+    tickShopTimer();
 
-      hide('menuScreen');
+    hide('menuScreen');
 
-      show('shopScreen');
+    show('shopScreen');
 
-    }
-  );
+  }
+);
 
 /* =========================================================
-   FIXED CLOSE BUTTONS
+   X BUTTON FIX
 ========================================================= */
 
 function closePanel(panelId){
@@ -1631,9 +1491,7 @@ function closePanel(panelId){
     document.getElementById('menuScreen');
 
   if(!panel || !menu){
-
     return;
-
   }
 
   panel.classList.add('hidden');
@@ -1644,33 +1502,29 @@ function closePanel(panelId){
 
 }
 
-
 /*
-  Capture pointer events before the canvas,
-  touch controls, or any other listener can
-  interfere with the X buttons.
+  Use pointerup in capture mode.
+
+  This catches the X button before the
+  canvas, touch controls, or other handlers.
 */
 
 document.addEventListener(
-  'pointerdown',
+  'pointerup',
   function(e){
 
     const button =
       e.target.closest('.close-x');
 
     if(!button){
-
       return;
-
     }
 
     if(
       button.id !== 'closeSkinsBtn' &&
       button.id !== 'closeShopBtn'
     ){
-
       return;
-
     }
 
     e.preventDefault();
@@ -1680,9 +1534,7 @@ document.addEventListener(
       button.id === 'closeSkinsBtn'
     ){
 
-      closePanel(
-        'skinsScreen'
-      );
+      closePanel('skinsScreen');
 
     }
 
@@ -1690,9 +1542,7 @@ document.addEventListener(
       button.id === 'closeShopBtn'
     ){
 
-      closePanel(
-        'shopScreen'
-      );
+      closePanel('shopScreen');
 
     }
 
@@ -1700,11 +1550,8 @@ document.addEventListener(
   true
 );
 
-
 /*
-  Extra click fallback.
-  This makes the buttons work with
-  mouse clicks as well as touch.
+  Mouse click fallback.
 */
 
 document.addEventListener(
@@ -1715,9 +1562,7 @@ document.addEventListener(
       e.target.closest('.close-x');
 
     if(!button){
-
       return;
-
     }
 
     if(
@@ -1727,9 +1572,7 @@ document.addEventListener(
       e.preventDefault();
       e.stopPropagation();
 
-      closePanel(
-        'skinsScreen'
-      );
+      closePanel('skinsScreen');
 
     }
 
@@ -1740,9 +1583,7 @@ document.addEventListener(
       e.preventDefault();
       e.stopPropagation();
 
-      closePanel(
-        'shopScreen'
-      );
+      closePanel('shopScreen');
 
     }
 
@@ -1753,51 +1594,48 @@ document.addEventListener(
 el('nameInput').value =
   state.playerName;
 
-el('playBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('playBtn').addEventListener(
+  'click',
+  () => {
 
-      state.playerName =
-        el('nameInput')
-          .value
-          .trim() ||
-        'Wanderer';
+    state.playerName =
+      el('nameInput')
+        .value
+        .trim() ||
+      'Wanderer';
 
-      saveState();
+    saveState();
 
-      tryLockLandscape();
+    tryLockLandscape();
 
-      startGame();
+    startGame();
 
-    }
-  );
+  }
+);
 
-el('respawnBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('respawnBtn').addEventListener(
+  'click',
+  () => {
 
-      hide('deathScreen');
+    hide('deathScreen');
 
-      startGame();
+    startGame();
 
-    }
-  );
+  }
+);
 
-el('menuBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('menuBtn').addEventListener(
+  'click',
+  () => {
 
-      hide('deathScreen');
+    hide('deathScreen');
 
-      refreshGemDisplays();
+    refreshGemDisplays();
 
-      show('menuScreen');
+    show('menuScreen');
 
-    }
-  );
+  }
+);
 
 refreshGemDisplays();
 
@@ -1846,69 +1684,66 @@ function applyMode(){
 
 applyMode();
 
-el('modeToggleBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('modeToggleBtn').addEventListener(
+  'click',
+  () => {
 
-      state.mode =
-        state.mode === 'mobile'
-          ? 'desktop'
-          : 'mobile';
+    state.mode =
+      state.mode === 'mobile'
+        ? 'desktop'
+        : 'mobile';
 
-      saveState();
+    saveState();
 
-      applyMode();
+    applyMode();
 
-    }
-  );
+  }
+);
 
-el('resetBtn')
-  .addEventListener(
-    'click',
-    () => {
+el('resetBtn').addEventListener(
+  'click',
+  () => {
 
-      if(
-        confirm(
-          'Reset all saved gems, skins, and shop purchases?'
-        )
-      ){
+    if(
+      confirm(
+        'Reset all saved gems, skins, and shop purchases?'
+      )
+    ){
 
-        localStorage.removeItem(
-          SAVE_KEY
-        );
+      localStorage.removeItem(
+        SAVE_KEY
+      );
 
-        const d =
-          defaultState();
+      const d =
+        defaultState();
 
-        state.gems =
-          d.gems;
+      state.gems =
+        d.gems;
 
-        state.selectedSkin =
-          d.selectedSkin;
+      state.selectedSkin =
+        d.selectedSkin;
 
-        state.unlockedSkins =
-          new Set(
-            d.unlockedSkins
-          );
+      state.unlockedSkins =
+        new Set(d.unlockedSkins);
 
-        state.ownedShopItems =
-          new Set(
-            d.ownedShopItems
-          );
+      state.ownedShopItems =
+        new Set(d.ownedShopItems);
 
-        state.playerName =
-          d.playerName;
+      state.playerName =
+        d.playerName;
 
-        el('nameInput').value =
-          state.playerName;
+      state.ownedShopDay =
+        d.ownedShopDay;
 
-        refreshGemDisplays();
+      el('nameInput').value =
+        state.playerName;
 
-      }
+      refreshGemDisplays();
 
     }
-  );
+
+  }
+);
 
 /* =========================================================
    ORIENTATION
@@ -2054,13 +1889,9 @@ const BOOST_MIN_LEN =
 ========================================================= */
 
 let mouse = {
-
   x:0,
-
   y:0,
-
   down:false
-
 };
 
 window.addEventListener(
@@ -2068,8 +1899,7 @@ window.addEventListener(
   e => {
 
     if(
-      state.mode !==
-      'mobile'
+      state.mode !== 'mobile'
     ){
 
       mouse.x =
@@ -2088,8 +1918,7 @@ window.addEventListener(
   () => {
 
     if(
-      state.mode !==
-      'mobile'
+      state.mode !== 'mobile'
     ){
 
       mouse.down = true;
@@ -2104,8 +1933,7 @@ window.addEventListener(
   () => {
 
     if(
-      state.mode !==
-      'mobile'
+      state.mode !== 'mobile'
     ){
 
       mouse.down = false;
@@ -2120,8 +1948,7 @@ window.addEventListener(
   e => {
 
     if(
-      state.mode !==
-      'mobile' &&
+      state.mode !== 'mobile' &&
       e.code === 'Space'
     ){
 
@@ -2137,8 +1964,7 @@ window.addEventListener(
   e => {
 
     if(
-      state.mode !==
-      'mobile' &&
+      state.mode !== 'mobile' &&
       e.code === 'Space'
     ){
 
@@ -2154,12 +1980,9 @@ window.addEventListener(
   e => {
 
     if(
-      state.mode ===
-      'mobile'
+      state.mode === 'mobile'
     ){
-
       return;
-
     }
 
     mouse.down = true;
@@ -2188,8 +2011,7 @@ window.addEventListener(
   () => {
 
     if(
-      state.mode !==
-      'mobile'
+      state.mode !== 'mobile'
     ){
 
       mouse.down = false;
@@ -2204,12 +2026,9 @@ window.addEventListener(
   e => {
 
     if(
-      state.mode ===
-      'mobile'
+      state.mode === 'mobile'
     ){
-
       return;
-
     }
 
     const t =
@@ -2356,9 +2175,7 @@ joystick.addEventListener(
       e.pointerId !==
       joyPointerId
     ){
-
       return;
-
     }
 
     updateJoystick(
@@ -2375,9 +2192,7 @@ function releaseJoystick(e){
     e.pointerId !==
     joyPointerId
   ){
-
     return;
-
   }
 
   joyPointerId =
@@ -2458,10 +2273,7 @@ let running = false;
 
 let runGems = 0;
 
-function rand(
-  a,
-  b
-){
+function rand(a,b){
 
   return (
     a +
@@ -2593,9 +2405,7 @@ function makeSnake(
     );
 
   const startLen =
-    state.ownedShopItems.has(
-      'headstart'
-    ) &&
+    state.ownedShopItems.has('headstart') &&
     isPlayer
       ? 22
       : 14;
@@ -2635,9 +2445,7 @@ function makeSnake(
 
     width:
       (
-        state.ownedShopItems.has(
-          'thick'
-        ) &&
+        state.ownedShopItems.has('thick') &&
         isPlayer
       )
         ? 22
@@ -2669,17 +2477,13 @@ function makeSnake(
 
       x:
         snake.x -
-        Math.cos(
-          snake.dir
-        ) *
+        Math.cos(snake.dir) *
         i *
         SEG_SPACING,
 
       y:
         snake.y -
-        Math.sin(
-          snake.dir
-        ) *
+        Math.sin(snake.dir) *
         i *
         SEG_SPACING
 
@@ -2751,25 +2555,16 @@ function updateSnake(
   dt
 ){
 
-  if(
-    !s.alive
-  ){
-
+  if(!s.alive){
     return;
-
   }
 
-  /* PLAYER */
-
-  if(
-    s.isPlayer
-  ){
+  if(s.isPlayer){
 
     let targetAngle;
 
     if(
-      state.mode ===
-      'mobile'
+      state.mode === 'mobile'
     ){
 
       targetAngle =
@@ -2815,20 +2610,14 @@ function updateSnake(
       diff >
       Math.PI
     ){
-
-      diff -=
-        Math.PI*2;
-
+      diff -= Math.PI*2;
     }
 
     while(
       diff <
       -Math.PI
     ){
-
-      diff +=
-        Math.PI*2;
-
+      diff += Math.PI*2;
     }
 
     s.dir +=
@@ -2841,8 +2630,6 @@ function updateSnake(
       );
 
   }
-
-  /* AI */
 
   else{
 
@@ -2893,20 +2680,14 @@ function updateSnake(
         diff >
         Math.PI
       ){
-
-        diff -=
-          Math.PI*2;
-
+        diff -= Math.PI*2;
       }
 
       while(
         diff <
         -Math.PI
       ){
-
-        diff +=
-          Math.PI*2;
-
+        diff += Math.PI*2;
       }
 
       s.dir +=
@@ -2916,30 +2697,22 @@ function updateSnake(
             turnStep,
             diff
           )
-        ) *
-        1.5;
+        ) * 1.5;
 
     }
 
-    else if(
-      isHunting
-    ){
+    else if(isHunting){
 
-      const leadDist =
-        50;
+      const leadDist = 50;
 
       const leadX =
         player.x +
-        Math.cos(
-          player.dir
-        ) *
+        Math.cos(player.dir) *
         leadDist;
 
       const leadY =
         player.y +
-        Math.sin(
-          player.dir
-        ) *
+        Math.sin(player.dir) *
         leadDist;
 
       const toPlayer =
@@ -2956,20 +2729,14 @@ function updateSnake(
         diff >
         Math.PI
       ){
-
-        diff -=
-          Math.PI*2;
-
+        diff -= Math.PI*2;
       }
 
       while(
         diff <
         -Math.PI
       ){
-
-        diff +=
-          Math.PI*2;
-
+        diff += Math.PI*2;
       }
 
       s.dir +=
@@ -2979,8 +2746,7 @@ function updateSnake(
             turnStep,
             diff
           )
-        ) *
-        1.3;
+        ) * 1.3;
 
     }
 
@@ -3008,20 +2774,14 @@ function updateSnake(
           diff >
           Math.PI
         ){
-
-          diff -=
-            Math.PI*2;
-
+          diff -= Math.PI*2;
         }
 
         while(
           diff <
           -Math.PI
         ){
-
-          diff +=
-            Math.PI*2;
-
+          diff += Math.PI*2;
         }
 
         s.dir +=
@@ -3069,8 +2829,6 @@ function updateSnake(
 
   }
 
-  /* MOVEMENT */
-
   const spd =
     s.speed *
     (
@@ -3080,37 +2838,24 @@ function updateSnake(
     );
 
   s.x +=
-    Math.cos(
-      s.dir
-    ) *
+    Math.cos(s.dir) *
     spd;
 
   s.y +=
-    Math.sin(
-      s.dir
-    ) *
+    Math.sin(s.dir) *
     spd;
 
   s.segs.unshift({
-
     x:s.x,
-
     y:s.y
-
   });
 
-  /* BOOST DRAIN */
-
-  if(
-    s.boosting
-  ){
+  if(s.boosting){
 
     const drainPerSec =
       (
         s.isPlayer &&
-        state.ownedShopItems.has(
-          'swift'
-        )
+        state.ownedShopItems.has('swift')
       )
         ? 9
         : 15;
@@ -3137,9 +2882,7 @@ function updateSnake(
       maxSegs
     )
   ){
-
     s.segs.pop();
-
   }
 
 }
@@ -3153,9 +2896,7 @@ function feedCheck(s){
   const pickupR =
     (
       s.isPlayer &&
-      state.ownedShopItems.has(
-        'magnet'
-      )
+      state.ownedShopItems.has('magnet')
     )
       ? 42
       : 22;
@@ -3190,9 +2931,7 @@ function feedCheck(s){
 
       if(
         s.isPlayer &&
-        state.ownedShopItems.has(
-          'luckyfind'
-        ) &&
+        state.ownedShopItems.has('luckyfind') &&
         Math.random()<0.12
       ){
 
@@ -3208,11 +2947,7 @@ function feedCheck(s){
 
   }
 
-  /* GEM COLLECTION */
-
-  if(
-    s.isPlayer
-  ){
+  if(s.isPlayer){
 
     for(
       let i=gemsWorld.length-1;
@@ -3265,18 +3000,15 @@ function killSnake(
   killer
 ){
 
-  if(
-    !s.alive
-  ){
-
+  if(!s.alive){
     return;
-
   }
 
   s.alive = false;
 
   /*
-    Drop HALF of the food orbs collected.
+    Every snake killed by another snake
+    drops HALF of the food orbs it collected.
   */
 
   const dropCount =
@@ -3311,11 +3043,8 @@ function killSnake(
     else{
 
       p = {
-
         x:s.x,
-
         y:s.y
-
       };
 
     }
@@ -3324,37 +3053,21 @@ function killSnake(
 
       x:
         p.x +
-        rand(
-          -18,
-          18
-        ),
+        rand(-18,18),
 
       y:
         p.y +
-        rand(
-          -18,
-          18
-        ),
+        rand(-18,18),
 
       r:
-        rand(
-          3,
-          5
-        ),
+        rand(3,5),
 
       hue:
-        rand(
-          150,
-          320
-        )
+        rand(150,320)
 
     });
 
   }
-
-  /*
-    Existing gem reward.
-  */
 
   if(
     killer &&
@@ -3403,8 +3116,7 @@ function headTouchesBody(
     (
       head.width +
       other.width
-    ) *
-    0.48;
+    ) * 0.48;
 
   const collisionRadiusSq =
     collisionRadius *
@@ -3450,15 +3162,9 @@ function checkCollisions(){
     const s =
       snakes[i];
 
-    if(
-      !s.alive
-    ){
-
+    if(!s.alive){
       continue;
-
     }
-
-    /* ARENA BOUNDARY */
 
     if(
       Math.hypot(
@@ -3477,8 +3183,6 @@ function checkCollisions(){
 
     }
 
-    /* SNAKE COLLISIONS */
-
     for(
       let j=0;
       j<snakes.length;
@@ -3492,9 +3196,7 @@ function checkCollisions(){
         other === s ||
         !other.alive
       ){
-
         continue;
-
       }
 
       if(
@@ -3519,9 +3221,7 @@ function checkCollisions(){
             2
           );
 
-        if(
-          headsTouch
-        ){
+        if(headsTouch){
 
           killSnake(
             s,
@@ -3581,22 +3281,16 @@ function respawnAIIfNeeded(){
   ){
 
     snakes.push(
-
       makeSnake(
-
         false,
-
         aiName(),
-
         SKINS[
           Math.floor(
             Math.random() *
             SKINS.length
           )
         ].id
-
       )
-
     );
 
   }
@@ -3642,9 +3336,7 @@ function drawSnake(s){
   if(
     !s.segs.length
   ){
-
     return;
-
   }
 
   const [
@@ -3652,8 +3344,6 @@ function drawSnake(s){
     c2
   ] =
     s.colors;
-
-  /* Aggressive indicator */
 
   if(
     s.aggressive &&
@@ -3689,8 +3379,6 @@ function drawSnake(s){
     ctx.stroke();
 
   }
-
-  /* Boost trail */
 
   if(
     s.boosting
@@ -3760,8 +3448,6 @@ function drawSnake(s){
 
   }
 
-  /* Body */
-
   for(
     let i=s.segs.length-1;
     i>=0;
@@ -3821,8 +3507,6 @@ function drawSnake(s){
 
   ctx.shadowBlur = 0;
 
-  /* Name tag */
-
   const hx =
     s.segs[0].x -
     player.x +
@@ -3878,9 +3562,7 @@ function drawFood(){
       sy < -20 ||
       sy > canvas.height+20
     ){
-
       continue;
-
     }
 
     ctx.beginPath();
@@ -3934,10 +3616,7 @@ function drawGems(){
       g.y -
       player.y +
       canvas.height/2 +
-      Math.sin(
-        g.t
-      ) *
-      3;
+      Math.sin(g.t) * 3;
 
     ctx.beginPath();
 
@@ -4029,12 +3708,10 @@ function drawBoundary(){
 function drawGrid(){
 
   const sx =
-    (-player.x) %
-    60;
+    (-player.x) % 60;
 
   const sy =
-    (-player.y) %
-    60;
+    (-player.y) % 60;
 
   ctx.strokeStyle =
     'rgba(75,227,216,0.05)';
@@ -4138,12 +3815,8 @@ let lastT =
 
 function loop(){
 
-  if(
-    !running
-  ){
-
+  if(!running){
     return;
-
   }
 
   const now =
@@ -4152,10 +3825,7 @@ function loop(){
   const dt =
     Math.min(
       0.05,
-      (
-        now-lastT
-      ) /
-      1000
+      (now-lastT) / 1000
     );
 
   lastT =
@@ -4176,12 +3846,8 @@ function loop(){
     const s of snakes
   ){
 
-    if(
-      s.alive
-    ){
-
+    if(s.alive){
       feedCheck(s);
-
     }
 
   }
@@ -4242,9 +3908,7 @@ function loop(){
 
   }
 
-  drawSnake(
-    player
-  );
+  drawSnake(player);
 
   el('lenHud').textContent =
     player.segs.length;
@@ -4304,8 +3968,7 @@ function startGame(){
   );
 
   if(
-    state.mode ===
-    'mobile'
+    state.mode === 'mobile'
   ){
 
     show('joystick');
@@ -4341,9 +4004,7 @@ function startGame(){
       state.selectedSkin
     );
 
-  snakes.push(
-    player
-  );
+  snakes.push(player);
 
   for(
     let i=0;
@@ -4352,22 +4013,16 @@ function startGame(){
   ){
 
     snakes.push(
-
       makeSnake(
-
         false,
-
         aiName(),
-
         SKINS[
           Math.floor(
             Math.random() *
             SKINS.length
           )
         ].id
-
       )
-
     );
 
   }
