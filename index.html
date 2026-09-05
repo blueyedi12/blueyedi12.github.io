@@ -239,7 +239,7 @@ function defaultState(){
     selectedSkin: 'default',
     unlockedSkins: ['default'],
     ownedShopItems: [],
-    ownedShopDay: null,      // which day's shop the ownedShopItems belong to
+    ownedShopDay: null,
     playerName: 'Wanderer',
     mode: ('ontouchstart' in window) ? 'mobile' : 'desktop'
   };
@@ -295,8 +295,8 @@ const state = {
 
 /* ============ SKINS ============ */
 const SKINS = [
-  {id:'default', name:'Kelp',      price:0,   colors:['#4be3d8','#2a8f8a']},
-  {id:'ember',   name:'Ember',     price:60,  colors:['#e3844b','#a13c1f']},
+  {id:'default', name:'Kelp',       price:0,   colors:['#4be3d8','#2a8f8a']},
+  {id:'ember',   name:'Ember',      price:60,  colors:['#e3844b','#a13c1f']},
   {id:'violet',  name:'Voidbloom', price:90,  colors:['#b04be3','#5b2189']},
   {id:'gold',    name:'Gilded',    price:150, colors:['#e3c04b','#8a6a15']},
   {id:'rose',    name:'Anemone',   price:150, colors:['#e34b8f','#8a2158']},
@@ -306,16 +306,16 @@ const SKINS = [
   {id:'solar',   name:'Solaris',   price:520, colors:['#ffdd6b','#ff7a3c']}
 ];
 
-/* ============ SHOP (deterministic daily rotation, no storage needed) ============ */
+/* ============ SHOP (deterministic daily rotation) ============ */
 const SHOP_POOL = [
-  {id:'magnet',  name:'Gem Magnet',    price:80,  desc:'Wider pickup radius for this run'},
-  {id:'headstart',name:'Head Start',   price:60,  desc:'Spawn with extra starting length'},
-  {id:'thick',   name:'Thick Hide',    price:100, desc:'Slightly wider body, harder to miss... but harder to be cut off too'},
-  {id:'doublegem',name:'Prospector',   price:180, desc:'Earn double gems from kills this run'},
-  {id:'swift',   name:'Swift Current', price:120, desc:'Boosting drains length slower'},
-  {id:'glowtrail',name:'Glow Trail',   price:50,  desc:'A brighter trail — cosmetic only'},
+  {id:'magnet',    name:'Gem Magnet',    price:80,  desc:'Wider pickup radius for this run'},
+  {id:'headstart', name:'Head Start',   price:60,  desc:'Spawn with extra starting length'},
+  {id:'thick',     name:'Thick Hide',    price:100, desc:'Slightly wider body, harder to miss... but harder to be cut off too'},
+  {id:'doublegem', name:'Prospector',   price:180, desc:'Earn double gems from kills this run'},
+  {id:'swift',     name:'Swift Current', price:120, desc:'Boosting drains length slower'},
+  {id:'glowtrail', name:'Glow Trail',   price:50,  desc:'A brighter trail — cosmetic only'},
   {id:'nightvision',name:'Deep Sight', price:70,  desc:'See further in the dark water'},
-  {id:'luckyfind',name:'Lucky Find',   price:140, desc:'Food occasionally worth extra length'}
+  {id:'luckyfind', name:'Lucky Find',   price:140, desc:'Food occasionally worth extra length'}
 ];
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function dayIndex(){return Math.floor(Date.now()/86400000);}
@@ -494,11 +494,11 @@ window.addEventListener('resize',resize);
 window.addEventListener('orientationchange', ()=>setTimeout(resize,50));
 resize();
 
-const WORLD_R = 2600;         // arena radius
+const WORLD_R = 2600;
 const FOOD_COUNT = 260;
 const AI_COUNT = 9;
 const SEG_SPACING = 6;
-const BOOST_MIN_LEN = 11;     // must be at least this long to start/continue boosting (floor is 10)
+const BOOST_MIN_LEN = 11;
 
 let mouse = {x:0,y:0,down:false};
 window.addEventListener('mousemove', e=>{ if(state.mode!=='mobile'){ mouse.x=e.clientX; mouse.y=e.clientY; } });
@@ -517,7 +517,7 @@ window.addEventListener('touchmove', e=>{
   const t=e.touches[0]; if(t){mouse.x=t.clientX; mouse.y=t.clientY;}
 },{passive:true});
 
-/* ---- mobile controls: virtual joystick + dedicated boost button ---- */
+/* ---- mobile controls ---- */
 let mobileAngle = 0, mobileActive = false, boostHeld = false;
 const joystick = el('joystick'), joyKnob = el('joystickKnob'), boostBtn = el('boostBtn');
 let joyPointerId = null;
@@ -532,9 +532,7 @@ function updateJoystick(clientX, clientY){
   joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
   if(dist > 8) mobileAngle = Math.atan2(dy,dx);
 }
-function resetJoystick(){
-  joyKnob.style.transform = 'translate(-50%,-50%)';
-}
+function resetJoystick(){ joyKnob.style.transform = 'translate(-50%,-50%)'; }
 
 joystick.addEventListener('pointerdown', e=>{
   e.preventDefault();
@@ -594,13 +592,13 @@ function makeSnake(isPlayer, name, skinId){
     colors: skinColors(skinId),
     x: Math.cos(ang)*r, y: Math.sin(ang)*r,
     dir: rand(0,Math.PI*2),
-    speed: 160, // pixels per second
+    speed: 160,
     boosting:false,
     segs: [],
     targetLen: startLen*SEG_SPACING,
     width: (state.ownedShopItems.has('thick') && isPlayer ? 15 : 12),
     alive:true,
-    turnRate: 5.4, // radians per second
+    turnRate: 5.4,
     aiTurnCooldown:0,
     aggressive: !isPlayer && Math.random() < 0.35
   };
@@ -637,7 +635,6 @@ function updateSnake(s, dt){
     const turnStep = s.turnRate * dt;
 
     if(distFromCenter > WORLD_R*0.85){
-      // boundary avoidance
       const toCenter = Math.atan2(-s.y,-s.x);
       let diff = toCenter - s.dir;
       while(diff>Math.PI) diff-=Math.PI*2;
@@ -662,7 +659,6 @@ function updateSnake(s, dt){
       : (Math.random()<0.002 && currentLength(s)>14);
   }
 
-  // Frame-rate independent movement calculation
   const spd = s.speed * (s.boosting?1.9:1) * dt;
   s.x += Math.cos(s.dir)*spd;
   s.y += Math.sin(s.dir)*spd;
@@ -806,104 +802,117 @@ function drawFood(){
   }
   ctx.shadowBlur=0;
 }
+
 function drawGems(){
   for(const g of gemsWorld){
     g.t += 0.05;
     const sx = g.x - player.x + canvas.width/2;
     const sy = g.y - player.y + canvas.height/2 + Math.sin(g.t)*3;
+    if(sx<-20||sx>canvas.width+20||sy<-20||sy>canvas.height+20) continue;
     ctx.beginPath();
-    ctx.fillStyle='#e3b74b';
-    ctx.shadowColor='#e3b74b'; ctx.shadowBlur=16;
-    ctx.moveTo(sx, sy-g.r); ctx.lineTo(sx+g.r,sy); ctx.lineTo(sx,sy+g.r); ctx.lineTo(sx-g.r,sy);
-    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e3b74b';
+    ctx.shadowColor = '#e3b74b';
+    ctx.shadowBlur = 10;
+    ctx.arc(sx, sy, g.r, 0, Math.PI * 2);
+    ctx.fill();
   }
-  ctx.shadowBlur=0;
+  ctx.shadowBlur = 0;
 }
-function drawBoundary(){
-  const sx = -player.x + canvas.width/2, sy=-player.y+canvas.height/2;
+
+function drawWorldBorder(){
+  const cx = canvas.width / 2 - player.x;
+  const cy = canvas.height / 2 - player.y;
   ctx.beginPath();
-  ctx.arc(sx,sy,WORLD_R,0,Math.PI*2);
-  ctx.strokeStyle='rgba(227,75,184,0.5)';
-  ctx.lineWidth=6;
-  ctx.shadowColor='rgba(227,75,184,0.6)'; ctx.shadowBlur=20;
+  ctx.arc(cx, cy, WORLD_R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(75, 227, 216, 0.3)';
+  ctx.lineWidth = 4;
   ctx.stroke();
-  ctx.shadowBlur=0;
-}
-function drawGrid(){
-  const sx = (-player.x) % 60, sy = (-player.y) % 60;
-  ctx.strokeStyle='rgba(75,227,216,0.05)';
-  ctx.lineWidth=1;
-  for(let x=sx- (Math.floor(sx/60)*0); x<canvas.width; x+=60){
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
-  }
-  for(let y=sy; y<canvas.height; y+=60){
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
-  }
 }
 
 function updateLeaderboard(){
-  const top = [...snakes].filter(s=>s.alive).sort((a,b)=>b.segs.length-a.segs.length).slice(0,5);
-  el('lbList').innerHTML = top.map(s=>`<div class="row-item"><span>${s.name}${s.isPlayer?' (you)':''}</span><span>${s.segs.length}</span></div>`).join('');
+  const sorted = [...snakes].sort((a,b) => b.segs.length - a.segs.length).slice(0, 5);
+  const lb = el('lbList');
+  lb.innerHTML = '';
+  sorted.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'row-item';
+    row.innerHTML = `<span>${s.name}</span><strong>${currentLength(s)}</strong>`;
+    lb.appendChild(row);
+  });
 }
 
-let lastT = performance.now();
-function loop(){
+function updateHUD(){
+  const len = currentLength(player);
+  const lenEl = el('lenHud');
+  lenEl.textContent = len;
+  lenEl.classList.toggle('boosting', player.boosting);
+  el('boostTag').classList.toggle('show', player.boosting);
+  el('liveGems').textContent = state.gems;
+}
+
+/* ---------- MAIN GAME LOOP ---------- */
+let lastTime = performance.now();
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && running) {
+    lastTime = performance.now();
+  }
+});
+
+function gameLoop(now){
   if(!running) return;
-  const now = performance.now();
-  const dt = Math.min(0.05,(now-lastT)/1000);
-  lastT = now;
+  
+  // FIX: Clamp delta time to prevent high-speed jumping on 120Hz screens or background tab switches
+  let dt = (now - lastTime) / 1000;
+  lastTime = now;
+
+  if (isNaN(dt) || dt < 0) dt = 0.016;
+  if (dt > 0.033) dt = 0.033; // Caps maximum leap per frame at ~30 FPS
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for(const s of snakes) updateSnake(s, dt);
-  for(const s of snakes) if(s.alive) feedCheck(s);
   checkCollisions();
+  for(const s of snakes) if(s.alive) feedCheck(s);
 
-  if(food.length < FOOD_COUNT) spawnFood(FOOD_COUNT-food.length);
   respawnAIIfNeeded();
 
+  if(food.length < FOOD_COUNT) spawnFood(FOOD_COUNT - food.length);
+
   if(!player.alive){
-    endGame();
+    running = false;
+    hide('hud'); hide('gemHud'); hide('leaderboard');
+    if(state.mode === 'mobile'){ hide('joystick'); hide('boostBtn'); }
+    el('deathStats').textContent = `Length ${currentLength(player)} — ${runGems} gems earned`;
+    show('deathScreen');
     return;
   }
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawGrid();
-  drawBoundary();
+  drawWorldBorder();
   drawFood();
   drawGems();
-  for(const s of snakes) if(s.alive && s!==player) drawSnake(s);
-  drawSnake(player);
+  for(const s of snakes) if(s.alive) drawSnake(s);
 
-  el('lenHud').textContent = player.segs.length;
-  el('lenHud').classList.toggle('boosting', player.boosting);
-  el('boostTag').classList.toggle('show', player.boosting);
+  updateHUD();
   updateLeaderboard();
 
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
 
 function startGame(){
-  hide('menuScreen'); hide('deathScreen'); hide('skinsScreen'); hide('shopScreen');
-  show('hud'); show('gemHud'); show('leaderboard');
-  mobileActive = false; boostHeld = false; joyPointerId = null; resetJoystick();
-  boostBtn.classList.remove('active');
-  if(state.mode==='mobile'){ show('joystick'); show('boostBtn'); } else { hide('joystick'); hide('boostBtn'); }
-  food=[]; gemsWorld=[]; snakes=[]; runGems=0;
+  food = []; gemsWorld = []; snakes = []; runGems = 0;
   spawnFood(FOOD_COUNT);
   player = makeSnake(true, state.playerName, state.selectedSkin);
   snakes.push(player);
-  for(let i=0;i<AI_COUNT;i++) snakes.push(makeSnake(false, aiName(), SKINS[Math.floor(Math.random()*SKINS.length)].id));
-  running = true;
-  lastT = performance.now();
-  requestAnimationFrame(loop);
-}
+  respawnAIIfNeeded();
 
-function endGame(){
-  running = false;
-  hide('hud'); hide('gemHud'); hide('leaderboard'); hide('joystick'); hide('boostBtn');
-  mobileActive = false; boostHeld = false;
-  el('deathStats').textContent = `Length ${player.segs.length} — ${runGems} gems earned this run`;
-  refreshGemDisplays();
-  show('deathScreen');
+  hide('menuScreen'); hide('skinsScreen'); hide('shopScreen'); hide('deathScreen');
+  show('hud'); show('gemHud'); show('leaderboard');
+  if(state.mode === 'mobile'){ show('joystick'); show('boostBtn'); }
+
+  running = true;
+  lastTime = performance.now(); // FIX: Reset timer right when game starts
+  requestAnimationFrame(gameLoop);
 }
 
 })();
