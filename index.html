@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Abyssal — a slither-style game</title>
+<style>
+  :root{
+    --deep-1:#04070d;
+    --deep-2:#0a1220;
+    --deep-3:#101b2e;
+    --glow-cyan:#4be3d8;
+    --glow-magenta:#e34bb8;
+    --glow-amber:#e3b74b;
+    --ink:#cfe6ea;
+    --ink-dim:#7f97a0;
+    --panel:rgba(10,18,32,0.86);
+    --panel-border:rgba(75,227,216,0.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--deep-1);overflow:hidden;
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--ink);}
+
+  #rotateOverlay{
+    position:fixed;inset:0;z-index:10000;
+    background:var(--deep-1);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    text-align:center;padding:32px;
+  }
+  #rotateOverlay .icon{font-size:44px;margin-bottom:14px;}
+  #rotateOverlay p{color:var(--ink-dim);font-size:15px;max-width:280px;margin:0;}
+  #game{position:absolute;top:0;left:0;width:100%;height:100%;display:block;background:radial-gradient(circle at 50% 40%,var(--deep-3),var(--deep-1) 75%);}
+
+  .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;
+    background:radial-gradient(ellipse at 50% 20%,rgba(75,227,216,0.08),transparent 60%),var(--deep-1);}
+  .hidden{display:none !important;}
+
+  .title-wrap{text-align:center;margin-bottom:28px;}
+  .title{
+    font-family:'Georgia',serif;
+    font-size:clamp(48px,9vw,88px);
+    letter-spacing:1px;
+    margin:0;
+    color:#eaf7f6;
+    text-shadow:0 0 18px rgba(75,227,216,0.55), 0 0 46px rgba(227,75,184,0.25);
+    font-weight:600;
+  }
+  .subtitle{color:var(--ink-dim);font-size:15px;margin-top:8px;letter-spacing:0.5px;}
+
+  .menu-panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:18px;
+    padding:28px 34px;
+    width:min(420px,88vw);
+    backdrop-filter:blur(6px);
+    box-shadow:0 0 40px rgba(75,227,216,0.08);
+  }
+  .name-input{
+    width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--panel-border);
+    background:rgba(255,255,255,0.03);color:var(--ink);font-size:15px;margin-bottom:16px;outline:none;
+  }
+  .name-input:focus{border-color:var(--glow-cyan);}
+
+  .btn{
+    display:block;width:100%;padding:14px 16px;margin-bottom:12px;border-radius:10px;border:1px solid var(--panel-border);
+    background:linear-gradient(180deg,rgba(75,227,216,0.14),rgba(75,227,216,0.04));
+    color:#eaf7f6;font-size:16px;font-weight:600;cursor:pointer;letter-spacing:0.3px;transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(75,227,216,0.18);}
+  .btn.primary{background:linear-gradient(180deg,rgba(75,227,216,0.35),rgba(75,227,216,0.12));border-color:var(--glow-cyan);}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:9px 12px;font-size:13px;margin-bottom:0;width:auto;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  .row{display:flex;gap:10px;}
+  .row .btn{flex:1;}
+
+  .gem-badge{
+    display:inline-flex;align-items:center;gap:6px;background:rgba(227,183,75,0.12);
+    border:1px solid rgba(227,183,75,0.4);color:var(--glow-amber);padding:6px 12px;border-radius:999px;font-size:14px;font-weight:600;
+  }
+  .gem-badge .dot{width:9px;height:9px;border-radius:50%;background:var(--glow-amber);box-shadow:0 0 8px var(--glow-amber);}
+
+  .topbar{position:absolute;top:18px;left:0;right:0;display:flex;justify-content:center;}
+
+  .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .panel-header h2{margin:0;font-family:Georgia,serif;font-weight:600;font-size:26px;color:#eaf7f6;}
+  .close-x{cursor:pointer;color:var(--ink-dim);font-size:22px;line-height:1;background:none;border:none;}
+  .close-x:hover{color:var(--ink);}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-height:52vh;overflow-y:auto;padding-right:4px;}
+  .grid::-webkit-scrollbar{width:6px;}
+  .grid::-webkit-scrollbar-thumb{background:rgba(75,227,216,0.3);border-radius:4px;}
+
+  .skin-card{
+    border-radius:12px;border:1px solid var(--panel-border);padding:10px;text-align:center;cursor:pointer;
+    background:rgba(255,255,255,0.02);position:relative;transition:border-color .12s ease;
+  }
+  .skin-card:hover{border-color:var(--glow-cyan);}
+  .skin-card.selected{border-color:var(--glow-cyan);box-shadow:0 0 14px rgba(75,227,216,0.35);}
+  .skin-card.locked{opacity:0.55;cursor:default;}
+  .skin-swatch{width:100%;height:34px;border-radius:8px;margin-bottom:8px;}
+  .skin-name{font-size:12px;color:var(--ink);margin-bottom:2px;}
+  .skin-price{font-size:11px;color:var(--glow-amber);}
+  .skin-owned{font-size:11px;color:var(--glow-cyan);}
+  .lock-icon{position:absolute;top:6px;right:8px;font-size:12px;color:var(--ink-dim);}
+
+  .shop-timer{font-size:12px;color:var(--ink-dim);margin-bottom:14px;text-align:center;}
+  .shop-list{display:flex;flex-direction:column;gap:12px;max-height:50vh;overflow-y:auto;padding-right:4px;}
+  .shop-item{
+    display:flex;justify-content:space-between;align-items:center;border:1px solid var(--panel-border);
+    border-radius:12px;padding:12px 14px;background:rgba(255,255,255,0.02);
+  }
+  .shop-item-name{font-size:14px;color:var(--ink);font-weight:600;}
+  .shop-item-desc{font-size:12px;color:var(--ink-dim);margin-top:3px;}
+
+  #hud{position:absolute;top:16px;left:16px;font-size:13px;color:var(--ink-dim);}
+  #hud .len{color:var(--ink);font-weight:600;transition:color .15s ease;}
+  #hud .len.boosting{color:#e34b4b;text-shadow:0 0 8px rgba(227,75,75,0.6);}
+  #hud .boost-tag{color:#e34b4b;font-size:11px;letter-spacing:0.5px;margin-left:6px;opacity:0;transition:opacity .15s ease;}
+  #hud .boost-tag.show{opacity:1;}
+  #gemHud{position:absolute;top:16px;right:16px;}
+  #deathScreen h2{font-family:Georgia,serif;font-size:34px;color:#eaf7f6;margin-bottom:4px;}
+  #deathScreen p{color:var(--ink-dim);margin-top:0;margin-bottom:22px;}
+  .leaderboard{position:absolute;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:12px;padding:10px 14px;font-size:12px;min-width:160px;}
+  .leaderboard h4{margin:0 0 6px 0;font-size:11px;letter-spacing:0.5px;color:var(--ink-dim);font-weight:600;}
+  .leaderboard div.row-item{display:flex;justify-content:space-between;color:var(--ink);padding:2px 0;}
+
+  #joystick{position:absolute;left:24px;bottom:24px;width:120px;height:120px;border-radius:50%;
+    background:rgba(255,255,255,0.05);border:2px solid rgba(75,227,216,0.3);touch-action:none;}
+  #joystickKnob{position:absolute;width:52px;height:52px;border-radius:50%;left:50%;top:50%;
+    background:rgba(75,227,216,0.35);border:2px solid var(--glow-cyan);transform:translate(-50%,-50%);}
+  #boostBtn{position:absolute;right:28px;bottom:32px;width:88px;height:88px;border-radius:50%;
+    background:rgba(227,75,75,0.18);border:2px solid rgba(227,75,75,0.5);color:#e34b4b;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+    letter-spacing:0.5px;touch-action:none;user-select:none;}
+  #boostBtn.active{background:rgba(227,75,75,0.4);box-shadow:0 0 24px rgba(227,75,75,0.5);}
+
+  body.mobile-ui .menu-panel{width:min(94vw,440px);padding:24px 22px;}
+  body.mobile-ui .btn{padding:16px;font-size:17px;}
+  body.mobile-ui .name-input{padding:14px;font-size:16px;}
+  body.mobile-ui #hud{font-size:15px;top:14px;left:14px;}
+  body.mobile-ui #gemHud{font-size:15px;padding:8px 14px;}
+  body.mobile-ui .leaderboard{bottom:auto;top:16px;right:16px;}
+  .mode-note{font-size:11px;color:var(--ink-dim);text-align:center;margin-top:12px;}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="rotateOverlay" class="hidden">
+  <div class="icon">📱↻</div>
+  <p>Abyssal plays in landscape. Rotate your device sideways (or widen this window) to continue.</p>
+</div>
+
+<!-- MAIN MENU -->
+<div id="menuScreen" class="screen">
+  <div class="topbar"><span class="gem-badge"><span class="dot"></span><span id="menuGems">0</span> gems</span></div>
+  <div class="title-wrap">
+    <h1 class="title">Abyssal</h1>
+    <div class="subtitle">grow long, eat glow, don't touch anything</div>
+  </div>
+  <div class="menu-panel">
+    <input id="nameInput" class="name-input" maxlength="16" placeholder="Enter a name" value="Wanderer">
+    <button class="btn primary" id="playBtn">Play</button>
+    <div class="row">
+      <button class="btn" id="skinsBtn">Skins</button>
+      <button class="btn" id="shopBtn">Shop</button>
+    </div>
+    <button class="btn ghost" id="modeToggleBtn">📱 Switch to Mobile Mode</button>
+    <div class="mode-note" id="modeNote">Playing in desktop mode — mouse to steer, hold to boost.</div>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="close-x" id="resetBtn" style="font-size:11px;color:var(--ink-dim)">reset saved progress</button>
+    </div>
+  </div>
+</div>
+
+<!-- SKINS PANEL -->
+<div id="skinsScreen" class="screen hidden">
+  <div class="menu-panel" style="width:min(560px,92vw)">
+    <div class="panel-header">
+      <h2>Skins</h2>
+      <button class="close-x" data-close="skinsScreen">✕</button>
+    </div>
+    <div style="margin-bottom:12px" class="gem-badge"><span class="dot"></span><span id="skinsGems">0</span> gems</div>
+    <div class="grid" id="skinGrid"></div>
+  </div>
+</div>
+
+<!-- SHOP PANEL -->
+<div id="shopScreen" class="screen hidden">
+  <div class="menu-panel" style="width:min(480px,92vw)">
+    <div class="panel-header">
+      <h2>Depths Market</h2>
+      <button class="close-x" data-close="shopScreen">✕</button>
+    </div>
+    <div style="margin-bottom:6px" class="gem-badge"><span class="dot"></span><span id="shopGems">0</span> gems</div>
+    <div class="shop-timer">restocks in <span id="shopTimer">--:--:--</span></div>
+    <div class="shop-list" id="shopList"></div>
+  </div>
+</div>
+
+<!-- IN-GAME HUD -->
+<div id="hud" class="hidden">
+  length: <span class="len" id="lenHud">10</span><span class="boost-tag" id="boostTag">BOOST</span>
+</div>
+<div id="gemHud" class="hidden gem-badge"><span class="dot"></span><span id="liveGems">0</span></div>
+<div class="leaderboard hidden" id="leaderboard">
+  <h4>TOP SNAKES</h4>
+  <div id="lbList"></div>
+</div>
+
+<div id="joystick" class="hidden"><div id="joystickKnob"></div></div>
+<div id="boostBtn" class="hidden">BOOST</div>
+
+<!-- DEATH SCREEN -->
+<div id="deathScreen" class="screen hidden">
+  <div class="menu-panel" style="text-align:center">
+    <h2 id="deathTitle">You were cut short</h2>
+    <p id="deathStats">Length 0 — 0 gems earned</p>
+    <button class="btn primary" id="respawnBtn">Play again</button>
+    <button class="btn ghost" id="menuBtn">Main menu</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ STATE (persisted to localStorage) ============ */
+const SAVE_KEY = 'abyssal_save_v1';
+
+function defaultState(){
+  return {
+    gems: 120,
+    selectedSkin: 'default',
+    unlockedSkins: ['default'],
+    ownedShopItems: [],
+    ownedShopDay: null,      // which day's shop the ownedShopItems belong to
+    playerName: 'Wanderer',
+    mode: ('ontouchstart' in window) ? 'mobile' : 'desktop'
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const d = defaultState();
+    return {
+      gems: typeof parsed.gems==='number' ? parsed.gems : d.gems,
+      selectedSkin: parsed.selectedSkin || d.selectedSkin,
+      unlockedSkins: Array.isArray(parsed.unlockedSkins) ? parsed.unlockedSkins : d.unlockedSkins,
+      ownedShopItems: Array.isArray(parsed.ownedShopItems) ? parsed.ownedShopItems : d.ownedShopItems,
+      ownedShopDay: typeof parsed.ownedShopDay==='number' ? parsed.ownedShopDay : d.ownedShopDay,
+      playerName: parsed.playerName || d.playerName,
+      mode: (parsed.mode==='mobile'||parsed.mode==='desktop') ? parsed.mode : d.mode
+    };
+  }catch(e){
+    console.warn('Save data unreadable, starting fresh.', e);
+    return defaultState();
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      gems: state.gems,
+      selectedSkin: state.selectedSkin,
+      unlockedSkins: [...state.unlockedSkins],
+      ownedShopItems: [...state.ownedShopItems],
+      ownedShopDay: state.ownedShopDay,
+      playerName: state.playerName,
+      mode: state.mode
+    }));
+  }catch(e){
+    console.warn('Could not save progress.', e);
+  }
+}
+
+const loaded = loadState();
+const state = {
+  gems: loaded.gems,
+  selectedSkin: loaded.selectedSkin,
+  unlockedSkins: new Set(loaded.unlockedSkins),
+  ownedShopItems: new Set(loaded.ownedShopItems),
+  ownedShopDay: loaded.ownedShopDay,
+  playerName: loaded.playerName,
+  mode: loaded.mode
+};
+
+/* ============ SKINS ============ */
+const SKINS = [
+  {id:'default', name:'Kelp',      price:0,   colors:['#4be3d8','#2a8f8a']},
+  {id:'ember',   name:'Ember',     price:60,  colors:['#e3844b','#a13c1f']},
+  {id:'violet',  name:'Voidbloom', price:90,  colors:['#b04be3','#5b2189']},
+  {id:'gold',    name:'Gilded',    price:150, colors:['#e3c04b','#8a6a15']},
+  {id:'rose',    name:'Anemone',   price:150, colors:['#e34b8f','#8a2158']},
+  {id:'ghost',   name:'Ghostfin',  price:220, colors:['#dfefee','#8fa6a4']},
+  {id:'toxic',   name:'Toxin',     price:280, colors:['#a6e34b','#4d7015']},
+  {id:'abyss',   name:'Abyss King',price:400, colors:['#4b6be3','#101b3f']},
+  {id:'solar',   name:'Solaris',   price:520, colors:['#ffdd6b','#ff7a3c']}
+];
+
+/* ============ SHOP (deterministic daily rotation, no storage needed) ============ */
+const SHOP_POOL = [
+  {id:'magnet',  name:'Gem Magnet',    price:80,  desc:'Wider pickup radius for this run'},
+  {id:'headstart',name:'Head Start',   price:60,  desc:'Spawn with extra starting length'},
+  {id:'thick',   name:'Thick Hide',    price:100, desc:'Slightly wider body, harder to miss... but harder to be cut off too'},
+  {id:'doublegem',name:'Prospector',   price:180, desc:'Earn double gems from kills this run'},
+  {id:'swift',   name:'Swift Current', price:120, desc:'Boosting drains length slower'},
+  {id:'glowtrail',name:'Glow Trail',   price:50,  desc:'A brighter trail — cosmetic only'},
+  {id:'nightvision',name:'Deep Sight', price:70,  desc:'See further in the dark water'},
+  {id:'luckyfind',name:'Lucky Find',   price:140, desc:'Food occasionally worth extra length'}
+];
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function dayIndex(){return Math.floor(Date.now()/86400000);}
+function todaysShop(){
+  const rng = mulberry32(dayIndex()*2654435761);
+  const pool = [...SHOP_POOL];
+  const picks=[];
+  for(let i=0;i<3 && pool.length;i++){
+    const idx = Math.floor(rng()*pool.length);
+    picks.push(pool.splice(idx,1)[0]);
+  }
+  return picks;
+}
+function msUntilNextRestock(){
+  const next = (dayIndex()+1)*86400000;
+  return next - Date.now();
+}
+
+/* ============ UI WIRING ============ */
+const el = id=>document.getElementById(id);
+function show(id){el(id).classList.remove('hidden');}
+function hide(id){el(id).classList.add('hidden');}
+function refreshGemDisplays(){
+  el('menuGems').textContent = state.gems;
+  el('skinsGems').textContent = state.gems;
+  el('shopGems').textContent = state.gems;
+  el('liveGems').textContent = state.gems;
+}
+
+function renderSkins(){
+  const grid = el('skinGrid');
+  grid.innerHTML = '';
+  SKINS.forEach(s=>{
+    const owned = state.unlockedSkins.has(s.id);
+    const selected = state.selectedSkin === s.id;
+    const card = document.createElement('div');
+    card.className = 'skin-card' + (owned? '':' locked') + (selected? ' selected':'');
+    card.innerHTML = `
+      <div class="skin-swatch" style="background:linear-gradient(135deg,${s.colors[0]},${s.colors[1]})"></div>
+      <div class="skin-name">${s.name}</div>
+      ${owned ? `<div class="skin-owned">${selected?'equipped':'owned'}</div>` : `<div class="skin-price">${s.price} gems</div>`}
+      ${!owned ? `<div class="lock-icon">🔒</div>` : ''}
+    `;
+    card.addEventListener('click', ()=>{
+      if(owned){
+        state.selectedSkin = s.id;
+        saveState();
+        renderSkins();
+      } else if(state.gems >= s.price){
+        state.gems -= s.price;
+        state.unlockedSkins.add(s.id);
+        state.selectedSkin = s.id;
+        refreshGemDisplays();
+        saveState();
+        renderSkins();
+      }
+    });
+    grid.appendChild(card);
+  });
+}
+
+function renderShop(){
+  const list = el('shopList');
+  list.innerHTML = '';
+  todaysShop().forEach(item=>{
+    const owned = state.ownedShopItems.has(item.id);
+    const row = document.createElement('div');
+    row.className='shop-item';
+    row.innerHTML = `
+      <div>
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-desc">${item.desc}</div>
+      </div>
+      <button class="btn small" ${owned?'disabled':''}>${owned?'Owned':item.price+' gems'}</button>
+    `;
+    row.querySelector('button').addEventListener('click', ()=>{
+      if(!owned && state.gems>=item.price){
+        state.gems -= item.price;
+        state.ownedShopItems.add(item.id);
+        refreshGemDisplays();
+        saveState();
+        renderShop();
+      }
+    });
+    list.appendChild(row);
+  });
+}
+function tickShopTimer(){
+  const ms = msUntilNextRestock();
+  const h = Math.floor(ms/3600000);
+  const m = Math.floor((ms%3600000)/60000);
+  const s = Math.floor((ms%60000)/1000);
+  el('shopTimer').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+setInterval(tickShopTimer,1000);
+
+el('skinsBtn').addEventListener('click', ()=>{ renderSkins(); refreshGemDisplays(); hide('menuScreen'); show('skinsScreen'); });
+el('shopBtn').addEventListener('click', ()=>{ renderShop(); refreshGemDisplays(); tickShopTimer(); hide('menuScreen'); show('shopScreen'); });
+document.querySelectorAll('[data-close]').forEach(b=>{
+  b.addEventListener('click', ()=>{ hide(el(b.dataset.close)); show('menuScreen'); refreshGemDisplays(); });
+});
+
+el('nameInput').value = state.playerName;
+el('playBtn').addEventListener('click', ()=>{
+  state.playerName = el('nameInput').value.trim() || 'Wanderer';
+  saveState();
+  tryLockLandscape();
+  startGame();
+});
+el('respawnBtn').addEventListener('click', ()=>{ hide('deathScreen'); startGame(); });
+el('menuBtn').addEventListener('click', ()=>{ hide('deathScreen'); refreshGemDisplays(); show('menuScreen'); });
+
+refreshGemDisplays();
+
+function applyMode(){
+  document.body.classList.toggle('mobile-ui', state.mode==='mobile');
+  const btn = el('modeToggleBtn');
+  const note = el('modeNote');
+  if(state.mode==='mobile'){
+    btn.textContent = '🖥️ Switch to Desktop Mode';
+    note.textContent = 'Playing in mobile mode — joystick to steer, button to boost.';
+  } else {
+    btn.textContent = '📱 Switch to Mobile Mode';
+    note.textContent = 'Playing in desktop mode — mouse to steer, hold to boost.';
+  }
+}
+applyMode();
+
+el('modeToggleBtn').addEventListener('click', ()=>{
+  state.mode = state.mode==='mobile' ? 'desktop' : 'mobile';
+  saveState();
+  applyMode();
+});
+
+el('resetBtn').addEventListener('click', ()=>{
+  if(confirm('Reset all saved gems, skins, and shop purchases?')){
+    localStorage.removeItem(SAVE_KEY);
+    const d = defaultState();
+    state.gems = d.gems;
+    state.selectedSkin = d.selectedSkin;
+    state.unlockedSkins = new Set(d.unlockedSkins);
+    state.ownedShopItems = new Set(d.ownedShopItems);
+    state.playerName = d.playerName;
+    el('nameInput').value = state.playerName;
+    refreshGemDisplays();
+  }
+});
+
+function checkOrientation(){
+  const portrait = window.innerHeight > window.innerWidth;
+  el('rotateOverlay').classList.toggle('hidden', !portrait);
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', ()=>setTimeout(checkOrientation,50));
+checkOrientation();
+
+function tryLockLandscape(){
+  const canvasEl = document.documentElement;
+  const req = canvasEl.requestFullscreen || canvasEl.webkitRequestFullscreen;
+  if(req){
+    try{
+      const p = req.call(canvasEl);
+      if(p && p.then) p.catch(()=>{});
+    }catch(e){}
+  }
+  if(screen.orientation && screen.orientation.lock){
+    screen.orientation.lock('landscape').catch(()=>{});
+  }
+}
+
+/* ============ GAME ENGINE ============ */
+const canvas = el('game');
+const ctx = canvas.getContext('2d');
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+window.addEventListener('resize',resize);
+window.addEventListener('orientationchange', ()=>setTimeout(resize,50));
+resize();
+
+const WORLD_R = 2600;         // arena radius
+const FOOD_COUNT = 260;
+const AI_COUNT = 9;
+const SEG_SPACING = 6;
+const BOOST_MIN_LEN = 11;     // must be at least this long to start/continue boosting (floor is 10)
+
+let mouse = {x:0,y:0,down:false};
+window.addEventListener('mousemove', e=>{ if(state.mode!=='mobile'){ mouse.x=e.clientX; mouse.y=e.clientY; } });
+window.addEventListener('mousedown', ()=>{ if(state.mode!=='mobile') mouse.down=true; });
+window.addEventListener('mouseup', ()=>{ if(state.mode!=='mobile') mouse.down=false; });
+window.addEventListener('keydown', e=>{ if(state.mode!=='mobile' && e.code==='Space') mouse.down=true; });
+window.addEventListener('keyup', e=>{ if(state.mode!=='mobile' && e.code==='Space') mouse.down=false; });
+window.addEventListener('touchstart', e=>{
+  if(state.mode==='mobile') return;
+  mouse.down=true;
+  const t=e.touches[0]; if(t){mouse.x=t.clientX; mouse.y=t.clientY;}
+},{passive:true});
+window.addEventListener('touchend', ()=>{ if(state.mode!=='mobile') mouse.down=false; });
+window.addEventListener('touchmove', e=>{
+  if(state.mode==='mobile') return;
+  const t=e.touches[0]; if(t){mouse.x=t.clientX; mouse.y=t.clientY;}
+},{passive:true});
+
+/* ---- mobile controls: virtual joystick + dedicated boost button ---- */
+let mobileAngle = 0, mobileActive = false, boostHeld = false;
+const joystick = el('joystick'), joyKnob = el('joystickKnob'), boostBtn = el('boostBtn');
+let joyPointerId = null;
+
+function updateJoystick(clientX, clientY){
+  const rect = joystick.getBoundingClientRect();
+  const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  let dx = clientX - cx, dy = clientY - cy;
+  const dist = Math.hypot(dx,dy);
+  const maxDist = rect.width/2 - 26;
+  if(dist > maxDist){ dx = dx/dist*maxDist; dy = dy/dist*maxDist; }
+  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  if(dist > 8) mobileAngle = Math.atan2(dy,dx);
+}
+function resetJoystick(){
+  joyKnob.style.transform = 'translate(-50%,-50%)';
+}
+
+joystick.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  joyPointerId = e.pointerId;
+  joystick.setPointerCapture(e.pointerId);
+  mobileActive = true;
+  updateJoystick(e.clientX, e.clientY);
+});
+joystick.addEventListener('pointermove', e=>{
+  if(e.pointerId!==joyPointerId) return;
+  updateJoystick(e.clientX, e.clientY);
+});
+function releaseJoystick(e){
+  if(e.pointerId!==joyPointerId) return;
+  joyPointerId = null;
+  mobileActive = false;
+  resetJoystick();
+}
+joystick.addEventListener('pointerup', releaseJoystick);
+joystick.addEventListener('pointercancel', releaseJoystick);
+
+boostBtn.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  boostBtn.setPointerCapture(e.pointerId);
+  boostHeld = true;
+  boostBtn.classList.add('active');
+});
+['pointerup','pointercancel','pointerleave'].forEach(evt=>{
+  boostBtn.addEventListener(evt, ()=>{ boostHeld = false; boostBtn.classList.remove('active'); });
+});
+
+let food = [], gemsWorld = [], snakes = [], player = null, running=false, runGems=0;
+
+function rand(a,b){return a+Math.random()*(b-a);}
+function dist2(x1,y1,x2,y2){const dx=x1-x2,dy=y1-y2;return dx*dx+dy*dy;}
+
+function spawnFood(n){
+  for(let i=0;i<n;i++){
+    const ang = rand(0,Math.PI*2), r = Math.sqrt(Math.random())*WORLD_R*0.98;
+    food.push({x:Math.cos(ang)*r, y:Math.sin(ang)*r, r: rand(3,5), hue: rand(150,320)});
+  }
+}
+function spawnGem(x,y,value){
+  gemsWorld.push({x,y,value,r:7,t:0});
+}
+
+function skinColors(id){
+  const s = SKINS.find(s=>s.id===id) || SKINS[0];
+  return s.colors;
+}
+
+function makeSnake(isPlayer, name, skinId){
+  const ang = rand(0,Math.PI*2), r = rand(0,WORLD_R*0.6);
+  const startLen = state.ownedShopItems.has('headstart') && isPlayer ? 16 : 10;
+  const snake = {
+    isPlayer, name,
+    colors: skinColors(skinId),
+    x: Math.cos(ang)*r, y: Math.sin(ang)*r,
+    dir: rand(0,Math.PI*2),
+    speed: 2.6,
+    boosting:false,
+    segs: [],
+    targetLen: startLen*SEG_SPACING,
+    width: (state.ownedShopItems.has('thick') && isPlayer ? 15 : 12),
+    alive:true,
+    turnRate: 0.09,
+    aiTurnCooldown:0,
+    aggressive: !isPlayer && Math.random() < 0.35
+  };
+  for(let i=0;i<startLen;i++) snake.segs.push({x:snake.x - Math.cos(snake.dir)*i*SEG_SPACING, y:snake.y - Math.sin(snake.dir)*i*SEG_SPACING});
+  return snake;
+}
+
+function currentLength(s){return s.segs.length;}
+
+function updateSnake(s, dt){
+  if(!s.alive) return;
+  if(s.isPlayer){
+    let targetAngle;
+    if(state.mode==='mobile'){
+      targetAngle = mobileActive ? mobileAngle : s.dir;
+      s.boosting = boostHeld && currentLength(s) >= BOOST_MIN_LEN;
+    } else {
+      const wx = mouse.x - canvas.width/2, wy = mouse.y - canvas.height/2;
+      targetAngle = Math.atan2(wy,wx);
+      s.boosting = mouse.down && currentLength(s) >= BOOST_MIN_LEN;
+    }
+    let diff = targetAngle - s.dir;
+    while(diff>Math.PI) diff-=Math.PI*2;
+    while(diff<-Math.PI) diff+=Math.PI*2;
+    s.dir += Math.max(-s.turnRate, Math.min(s.turnRate, diff));
+  } else {
+    s.aiTurnCooldown -= dt;
+    const distFromCenter = Math.hypot(s.x,s.y);
+    const distToPlayer = player ? Math.hypot(s.x-player.x, s.y-player.y) : Infinity;
+    const isHunting = s.aggressive && player && player.alive && distToPlayer < 950;
+
+    if(distFromCenter > WORLD_R*0.85){
+      // boundary avoidance always takes priority
+      const toCenter = Math.atan2(-s.y,-s.x);
+      let diff = toCenter - s.dir;
+      while(diff>Math.PI) diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      s.dir += Math.max(-s.turnRate, Math.min(s.turnRate, diff))*1.5;
+    } else if(isHunting){
+      // steer toward a point slightly ahead of the player, trying to cut them off
+      const leadDist = 50;
+      const leadX = player.x + Math.cos(player.dir)*leadDist;
+      const leadY = player.y + Math.sin(player.dir)*leadDist;
+      const toPlayer = Math.atan2(leadY - s.y, leadX - s.x);
+      let diff = toPlayer - s.dir;
+      while(diff>Math.PI) diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      s.dir += Math.max(-s.turnRate, Math.min(s.turnRate, diff))*1.3;
+    } else if(s.aiTurnCooldown<=0){
+      s.dir += rand(-0.5,0.5);
+      s.aiTurnCooldown = rand(0.6,1.8);
+    }
+
+    s.boosting = isHunting
+      ? (distToPlayer < 320 && Math.random()<0.02 && currentLength(s)>14)
+      : (Math.random()<0.002 && currentLength(s)>14);
+  }
+
+  const spd = s.speed * (s.boosting?1.9:1);
+  s.x += Math.cos(s.dir)*spd;
+  s.y += Math.sin(s.dir)*spd;
+  s.segs.unshift({x:s.x,y:s.y});
+
+  if(s.boosting){
+    const drainPerSec = (s.isPlayer && state.ownedShopItems.has('swift')) ? 9 : 15; // length units/sec
+    s.targetLen = Math.max(10*SEG_SPACING, s.targetLen - drainPerSec*dt);
+  }
+
+  const maxSegs = Math.floor(s.targetLen / SEG_SPACING);
+  while(s.segs.length > Math.max(10,maxSegs)) s.segs.pop();
+}
+
+function feedCheck(s){
+  const pickupR = (s.isPlayer && state.ownedShopItems.has('magnet')) ? 42 : 22;
+  for(let i=food.length-1;i>=0;i--){
+    const f = food[i];
+    if(dist2(s.x,s.y,f.x,f.y) < pickupR*pickupR){
+      food.splice(i,1);
+      let growth = 1;
+      if(s.isPlayer && state.ownedShopItems.has('luckyfind') && Math.random()<0.12) growth = 4;
+      s.targetLen += SEG_SPACING*growth;
+    }
+  }
+  if(s.isPlayer){
+    for(let i=gemsWorld.length-1;i>=0;i--){
+      const g = gemsWorld[i];
+      if(dist2(s.x,s.y,g.x,g.y) < pickupR*pickupR){
+        gemsWorld.splice(i,1);
+        state.gems += g.value;
+        runGems += g.value;
+        refreshGemDisplays();
+        saveState();
+      }
+    }
+  }
+}
+
+function killSnake(s, killer){
+  s.alive = false;
+  // scatter food along body
+  for(let i=0;i<s.segs.length;i+=2){
+    food.push({x:s.segs[i].x+rand(-8,8), y:s.segs[i].y+rand(-8,8), r:rand(3,5), hue: rand(150,320)});
+  }
+  if(killer && killer.isPlayer){
+    let value = Math.max(4, Math.floor(s.segs.length*0.6));
+    if(state.ownedShopItems.has('doublegem')) value*=2;
+    spawnGem(s.x, s.y, value);
+  }
+}
+
+function circleHitsBody(px,py,pr,body,startAt){
+  for(let i=startAt;i<body.length;i++){
+    if(dist2(px,py,body[i].x,body[i].y) < (pr)*(pr)) return true;
+  }
+  return false;
+}
+
+function checkCollisions(){
+  for(const s of snakes){
+    if(!s.alive) continue;
+    // boundary
+    if(Math.hypot(s.x,s.y) > WORLD_R){ killSnake(s,null); continue; }
+    for(const other of snakes){
+      if(other===s || !other.alive) continue;
+      const hitR = (s.width+other.width)/2 * 0.7;
+      if(circleHitsBody(s.x,s.y,hitR, other.segs, 4)){
+        killSnake(s, other);
+        break;
+      }
+    }
+  }
+  snakes = snakes.filter(s=>s.alive || s===player);
+}
+
+function respawnAIIfNeeded(){
+  const aliveAI = snakes.filter(s=>!s.isPlayer && s.alive).length;
+  for(let i=aliveAI;i<AI_COUNT;i++){
+    snakes.push(makeSnake(false, aiName(), SKINS[Math.floor(Math.random()*SKINS.length)].id));
+  }
+}
+const NAME_POOL=['Finn','Kelpie','Roe','Silt','Nyx','Coral','Marrow','Tide','Brine','Glim','Vex','Opal','Drift','Murk'];
+function aiName(){return NAME_POOL[Math.floor(Math.random()*NAME_POOL.length)];}
+
+/* ---------- rendering ---------- */
+function drawSnake(s){
+  const [c1,c2] = s.colors;
+  if(s.aggressive){
+    const hx = s.segs[0].x - player.x + canvas.width/2;
+    const hy = s.segs[0].y - player.y + canvas.height/2;
+    ctx.beginPath();
+    ctx.arc(hx,hy, s.width*0.9, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(227,75,75,0.55)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  if(s.boosting){
+    const hx = s.segs[0].x - player.x + canvas.width/2;
+    const hy = s.segs[0].y - player.y + canvas.height/2;
+    for(let k=1;k<=3;k++){
+      const back = s.segs[Math.min(s.segs.length-1,k*2)];
+      const bx = back.x - player.x + canvas.width/2;
+      const by = back.y - player.y + canvas.height/2;
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(227,75,75,${0.25/k})`;
+      ctx.lineWidth = s.width*0.6;
+      ctx.moveTo(hx,hy); ctx.lineTo(bx,by);
+      ctx.stroke();
+    }
+  }
+  for(let i=s.segs.length-1;i>=0;i--){
+    const p = s.segs[i];
+    const sx = p.x - player.x + canvas.width/2;
+    const sy = p.y - player.y + canvas.height/2;
+    const t = i/s.segs.length;
+    const w = s.width * (1 - t*0.35);
+    ctx.beginPath();
+    ctx.fillStyle = i%6===0 ? c2 : c1;
+    ctx.shadowColor = c1; ctx.shadowBlur = s.boosting? 14:6;
+    ctx.arc(sx,sy,w/2,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  // name tag
+  const hx = s.segs[0].x - player.x + canvas.width/2;
+  const hy = s.segs[0].y - player.y + canvas.height/2;
+  ctx.font='12px Segoe UI, sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.75)';
+  ctx.textAlign='center';
+  ctx.fillText(s.name, hx, hy - s.width - 6);
+}
+
+function drawFood(){
+  for(const f of food){
+    const sx = f.x - player.x + canvas.width/2;
+    const sy = f.y - player.y + canvas.height/2;
+    if(sx<-20||sx>canvas.width+20||sy<-20||sy>canvas.height+20) continue;
+    ctx.beginPath();
+    ctx.fillStyle = `hsl(${f.hue},80%,65%)`;
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur=8;
+    ctx.arc(sx,sy,f.r,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.shadowBlur=0;
+}
+function drawGems(){
+  for(const g of gemsWorld){
+    g.t += 0.05;
+    const sx = g.x - player.x + canvas.width/2;
+    const sy = g.y - player.y + canvas.height/2 + Math.sin(g.t)*3;
+    ctx.beginPath();
+    ctx.fillStyle='#e3b74b';
+    ctx.shadowColor='#e3b74b'; ctx.shadowBlur=16;
+    ctx.moveTo(sx, sy-g.r); ctx.lineTo(sx+g.r,sy); ctx.lineTo(sx,sy+g.r); ctx.lineTo(sx-g.r,sy);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+}
+function drawBoundary(){
+  const sx = -player.x + canvas.width/2, sy=-player.y+canvas.height/2;
+  ctx.beginPath();
+  ctx.arc(sx,sy,WORLD_R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(227,75,184,0.5)';
+  ctx.lineWidth=6;
+  ctx.shadowColor='rgba(227,75,184,0.6)'; ctx.shadowBlur=20;
+  ctx.stroke();
+  ctx.shadowBlur=0;
+}
+function drawGrid(){
+  const sx = (-player.x) % 60, sy = (-player.y) % 60;
+  ctx.strokeStyle='rgba(75,227,216,0.05)';
+  ctx.lineWidth=1;
+  for(let x=sx- (Math.floor(sx/60)*0); x<canvas.width; x+=60){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+  }
+  for(let y=sy; y<canvas.height; y+=60){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+  }
+}
+
+function updateLeaderboard(){
+  const top = [...snakes].filter(s=>s.alive).sort((a,b)=>b.segs.length-a.segs.length).slice(0,5);
+  el('lbList').innerHTML = top.map(s=>`<div class="row-item"><span>${s.name}${s.isPlayer?' (you)':''}</span><span>${s.segs.length}</span></div>`).join('');
+}
+
+let lastT = performance.now();
+function loop(){
+  if(!running) return;
+  const now = performance.now();
+  const dt = Math.min(0.05,(now-lastT)/1000);
+  lastT = now;
+
+  for(const s of snakes) updateSnake(s, dt);
+  for(const s of snakes) if(s.alive) feedCheck(s);
+  checkCollisions();
+
+  if(food.length < FOOD_COUNT) spawnFood(FOOD_COUNT-food.length);
+  respawnAIIfNeeded();
+
+  if(!player.alive){
+    endGame();
+    return;
+  }
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawGrid();
+  drawBoundary();
+  drawFood();
+  drawGems();
+  for(const s of snakes) if(s.alive && s!==player) drawSnake(s);
+  drawSnake(player);
+
+  el('lenHud').textContent = player.segs.length;
+  el('lenHud').classList.toggle('boosting', player.boosting);
+  el('boostTag').classList.toggle('show', player.boosting);
+  updateLeaderboard();
+
+  requestAnimationFrame(loop);
+}
+
+function startGame(){
+  hide('menuScreen'); hide('deathScreen'); hide('skinsScreen'); hide('shopScreen');
+  show('hud'); show('gemHud'); show('leaderboard');
+  mobileActive = false; boostHeld = false; joyPointerId = null; resetJoystick();
+  boostBtn.classList.remove('active');
+  if(state.mode==='mobile'){ show('joystick'); show('boostBtn'); } else { hide('joystick'); hide('boostBtn'); }
+  food=[]; gemsWorld=[]; snakes=[]; runGems=0;
+  spawnFood(FOOD_COUNT);
+  player = makeSnake(true, state.playerName, state.selectedSkin);
+  snakes.push(player);
+  for(let i=0;i<AI_COUNT;i++) snakes.push(makeSnake(false, aiName(), SKINS[Math.floor(Math.random()*SKINS.length)].id));
+  running = true;
+  lastT = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function endGame(){
+  running = false;
+  hide('hud'); hide('gemHud'); hide('leaderboard'); hide('joystick'); hide('boostBtn');
+  mobileActive = false; boostHeld = false;
+  el('deathStats').textContent = `Length ${player.segs.length} — ${runGems} gems earned this run`;
+  refreshGemDisplays();
+  show('deathScreen');
+}
+
+})();
+</script>
+</body>
+</html>
