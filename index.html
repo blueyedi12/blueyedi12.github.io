@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Abyssal — a slither-style game</title>
+<title>Slither Snake — a slither-style game</title>
 <style>
   :root{
     --deep-1:#04070d;
@@ -489,9 +489,18 @@ function tryLockLandscape(){
 /* ============ GAME ENGINE ============ */
 const canvas = el('game');
 const ctx = canvas.getContext('2d');
-function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
-window.addEventListener('resize',resize);
-window.addEventListener('orientationchange', ()=>setTimeout(resize,50));
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 50));
 resize();
 
 const WORLD_R = 2600;
@@ -616,7 +625,7 @@ function updateSnake(s, dt){
       targetAngle = mobileActive ? mobileAngle : s.dir;
       s.boosting = boostHeld && currentLength(s) >= BOOST_MIN_LEN;
     } else {
-      const wx = mouse.x - canvas.width/2, wy = mouse.y - canvas.height/2;
+      const wx = mouse.x - window.innerWidth/2, wy = mouse.y - window.innerHeight/2;
       targetAngle = Math.atan2(wy,wx);
       s.boosting = mouse.down && currentLength(s) >= BOOST_MIN_LEN;
     }
@@ -745,9 +754,12 @@ function aiName(){return NAME_POOL[Math.floor(Math.random()*NAME_POOL.length)];}
 /* ---------- rendering ---------- */
 function drawSnake(s){
   const [c1,c2] = s.colors;
+  const viewW = window.innerWidth;
+  const viewH = window.innerHeight;
+
   if(s.aggressive){
-    const hx = s.segs[0].x - player.x + canvas.width/2;
-    const hy = s.segs[0].y - player.y + canvas.height/2;
+    const hx = s.segs[0].x - player.x + viewW/2;
+    const hy = s.segs[0].y - player.y + viewH/2;
     ctx.beginPath();
     ctx.arc(hx,hy, s.width*0.9, 0, Math.PI*2);
     ctx.strokeStyle = 'rgba(227,75,75,0.55)';
@@ -755,12 +767,12 @@ function drawSnake(s){
     ctx.stroke();
   }
   if(s.boosting){
-    const hx = s.segs[0].x - player.x + canvas.width/2;
-    const hy = s.segs[0].y - player.y + canvas.height/2;
+    const hx = s.segs[0].x - player.x + viewW/2;
+    const hy = s.segs[0].y - player.y + viewH/2;
     for(let k=1;k<=3;k++){
       const back = s.segs[Math.min(s.segs.length-1,k*2)];
-      const bx = back.x - player.x + canvas.width/2;
-      const by = back.y - player.y + canvas.height/2;
+      const bx = back.x - player.x + viewW/2;
+      const by = back.y - player.y + viewH/2;
       ctx.beginPath();
       ctx.strokeStyle = `rgba(227,75,75,${0.25/k})`;
       ctx.lineWidth = s.width*0.6;
@@ -770,8 +782,8 @@ function drawSnake(s){
   }
   for(let i=s.segs.length-1;i>=0;i--){
     const p = s.segs[i];
-    const sx = p.x - player.x + canvas.width/2;
-    const sy = p.y - player.y + canvas.height/2;
+    const sx = p.x - player.x + viewW/2;
+    const sy = p.y - player.y + viewH/2;
     const t = i/s.segs.length;
     const w = s.width * (1 - t*0.35);
     ctx.beginPath();
@@ -781,8 +793,8 @@ function drawSnake(s){
     ctx.fill();
   }
   ctx.shadowBlur=0;
-  const hx = s.segs[0].x - player.x + canvas.width/2;
-  const hy = s.segs[0].y - player.y + canvas.height/2;
+  const hx = s.segs[0].x - player.x + viewW/2;
+  const hy = s.segs[0].y - player.y + viewH/2;
   ctx.font='12px Segoe UI, sans-serif';
   ctx.fillStyle='rgba(255,255,255,0.75)';
   ctx.textAlign='center';
@@ -790,10 +802,12 @@ function drawSnake(s){
 }
 
 function drawFood(){
+  const viewW = window.innerWidth;
+  const viewH = window.innerHeight;
   for(const f of food){
-    const sx = f.x - player.x + canvas.width/2;
-    const sy = f.y - player.y + canvas.height/2;
-    if(sx<-20||sx>canvas.width+20||sy<-20||sy>canvas.height+20) continue;
+    const sx = f.x - player.x + viewW/2;
+    const sy = f.y - player.y + viewH/2;
+    if(sx<-20||sx>viewW+20||sy<-20||sy>viewH+20) continue;
     ctx.beginPath();
     ctx.fillStyle = `hsl(${f.hue},80%,65%)`;
     ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur=8;
@@ -804,11 +818,13 @@ function drawFood(){
 }
 
 function drawGems(){
+  const viewW = window.innerWidth;
+  const viewH = window.innerHeight;
   for(const g of gemsWorld){
     g.t += 0.05;
-    const sx = g.x - player.x + canvas.width/2;
-    const sy = g.y - player.y + canvas.height/2 + Math.sin(g.t)*3;
-    if(sx<-20||sx>canvas.width+20||sy<-20||sy>canvas.height+20) continue;
+    const sx = g.x - player.x + viewW/2;
+    const sy = g.y - player.y + viewH/2 + Math.sin(g.t)*3;
+    if(sx<-20||sx>viewW+20||sy<-20||sy>viewH+20) continue;
     ctx.beginPath();
     ctx.fillStyle = '#e3b74b';
     ctx.shadowColor = '#e3b74b';
@@ -820,8 +836,8 @@ function drawGems(){
 }
 
 function drawWorldBorder(){
-  const cx = canvas.width / 2 - player.x;
-  const cy = canvas.height / 2 - player.y;
+  const cx = window.innerWidth / 2 - player.x;
+  const cy = window.innerHeight / 2 - player.y;
   ctx.beginPath();
   ctx.arc(cx, cy, WORLD_R, 0, Math.PI * 2);
   ctx.strokeStyle = 'rgba(75, 227, 216, 0.3)';
@@ -861,15 +877,14 @@ document.addEventListener('visibilitychange', () => {
 
 function gameLoop(now){
   if(!running) return;
-  
-  // FIX: Clamp delta time to prevent high-speed jumping on 120Hz screens or background tab switches
+
   let dt = (now - lastTime) / 1000;
   lastTime = now;
 
   if (isNaN(dt) || dt < 0) dt = 0.016;
-  if (dt > 0.033) dt = 0.033; // Caps maximum leap per frame at ~30 FPS
+  if (dt > 0.033) dt = 0.033;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
   for(const s of snakes) updateSnake(s, dt);
   checkCollisions();
@@ -911,7 +926,7 @@ function startGame(){
   if(state.mode === 'mobile'){ show('joystick'); show('boostBtn'); }
 
   running = true;
-  lastTime = performance.now(); // FIX: Reset timer right when game starts
+  lastTime = performance.now();
   requestAnimationFrame(gameLoop);
 }
 
