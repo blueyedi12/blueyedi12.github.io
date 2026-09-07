@@ -343,6 +343,21 @@
     color:var(--glow-cyan);
   }
 
+  .skin-feature{
+    font-size:9px;
+    color:var(--glow-magenta);
+    margin-bottom:4px;
+    letter-spacing:0.2px;
+  }
+
+  .skin-card{
+    overflow:hidden;
+  }
+
+  .skin-swatch{
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12),0 0 10px rgba(75,227,216,0.08);
+  }
+
   .lock-icon{
     position:absolute;
     top:6px;
@@ -559,6 +574,11 @@
     text-align:center;
     margin-top:12px;
   }
+
+  .admin-btn{position:fixed;right:12px;bottom:10px;z-index:90;padding:5px 8px;border:1px solid rgba(255,255,255,0.14);border-radius:6px;background:rgba(10,18,28,0.72);color:rgba(255,255,255,0.42);font-size:9px;letter-spacing:0.8px;cursor:pointer;opacity:0.55;}
+  .admin-btn:hover{opacity:1;color:rgba(255,255,255,0.75);}
+  .admin-btn.active{color:#7fffb0;border-color:rgba(127,255,176,0.4);opacity:0.9;}
+
 </style>
 </head>
 
@@ -740,6 +760,8 @@
   BOOST
 </div>
 
+<button type="button" id="adminBtn" class="admin-btn">ADMIN</button>
+
 <div id="deathScreen" class="screen hidden">
 
   <div class="menu-panel" style="text-align:center">
@@ -781,10 +803,15 @@ function defaultState(){
 
     gems:120,
 
+    adminMode:false,
+
     selectedSkin:'default',
 
     unlockedSkins:[
-      'default'
+      'default',
+      'tide',
+      'ember',
+      'violet'
     ],
 
     ownedShopItems:[],
@@ -832,7 +859,13 @@ function loadState(){
 
       unlockedSkins:
         Array.isArray(parsed.unlockedSkins)
-          ? parsed.unlockedSkins
+          ? [...new Set([
+              ...parsed.unlockedSkins,
+              'default',
+              'tide',
+              'ember',
+              'violet'
+            ])]
           : d.unlockedSkins,
 
       ownedShopItems:
@@ -951,85 +984,108 @@ const state = {
 
 const SKINS = [
 
+  /* FREE STARTER SKINS */
+
   {
     id:'default',
     name:'Kelp',
     price:0,
     colors:['#4be3d8','#2a8f8a'],
-    pattern:'scales',
-    desc:'A mossy hide of overlapping scales — sturdy and unassuming.'
+    pattern:'solid',
+    feature:'none',
+    desc:'Your classic sea-green starter.'
+  },
+
+  {
+    id:'tide',
+    name:'Tide',
+    price:0,
+    colors:['#4b8fe3','#24518c'],
+    pattern:'solid',
+    feature:'none',
+    desc:'A simple deep-ocean blue.'
   },
 
   {
     id:'ember',
     name:'Ember',
-    price:60,
+    price:0,
     colors:['#e3844b','#a13c1f'],
-    pattern:'stripes',
-    desc:'Charred bands like cooling lava rock.'
+    pattern:'solid',
+    feature:'none',
+    desc:'A simple warm orange.'
   },
 
   {
     id:'violet',
-    name:'Voidbloom',
-    price:90,
+    name:'Violet',
+    price:0,
     colors:['#b04be3','#5b2189'],
+    pattern:'solid',
+    feature:'none',
+    desc:'A simple deep purple.'
+  },
+
+  /* PREMIUM DESIGNED SKINS */
+
+  {
+    id:'reefqueen',
+    name:'Reef Queen',
+    price:150,
+    colors:['#f04b9b','#6d216b'],
     pattern:'spots',
-    desc:'Bioluminescent spores that pulse faintly in the dark.'
+    feature:'frills',
+    desc:'A flashy reef serpent covered in glowing coral spots.'
   },
 
   {
-    id:'gold',
-    name:'Gilded',
-    price:150,
-    colors:['#e3c04b','#8a6a15'],
-    pattern:'diamond',
-    desc:'Diamond-plated scales, hammered from old sunken treasure.'
-  },
-
-  {
-    id:'rose',
-    name:'Anemone',
-    price:150,
-    colors:['#e34b8f','#8a2158'],
-    pattern:'spots',
-    desc:'Soft tentacled spots like a reef anemone.'
+    id:'toxic',
+    name:'Toxic Bloom',
+    price:220,
+    colors:['#b7ef45','#315f18'],
+    pattern:'stripes',
+    feature:'spikes',
+    desc:'Radioactive warning stripes with venomous spikes.'
   },
 
   {
     id:'ghost',
     name:'Ghostfin',
-    price:220,
-    colors:['#dfefee','#8fa6a4'],
+    price:300,
+    colors:['#dffbf7','#5f8f91'],
     pattern:'scales',
-    desc:'Pale, near-translucent scales that barely catch the light.'
+    feature:'fin',
+    desc:'A translucent deep-sea phantom with a glowing fin.'
   },
 
   {
-    id:'toxic',
-    name:'Toxin',
-    price:280,
-    colors:['#a6e34b','#4d7015'],
-    pattern:'stripes',
-    desc:'Warning bands, bright as a poison dart frog.'
+    id:'gold',
+    name:'Treasureback',
+    price:380,
+    colors:['#ffe36b','#9a6714'],
+    pattern:'diamond',
+    feature:'crown',
+    desc:'Ancient treasure armor with a tiny golden crown.'
   },
 
   {
     id:'abyss',
-    name:'Abyss King',
-    price:400,
-    colors:['#4b6be3','#101b3f'],
-    pattern:'diamond',
-    desc:'Deep royal plating fit for the bottom of the trench.'
+    name:'Void Serpent',
+    price:500,
+    colors:['#5f7cff','#111936'],
+    pattern:'rings',
+    feature:'horns',
+    desc:'A creature from the deepest trench, marked by violet rings.'
   },
 
   {
     id:'solar',
     name:'Solaris',
-    price:520,
-    colors:['#ffdd6b','#ff7a3c'],
-    pattern:'spots',
-    desc:'Flecked with tiny flares, like a captured sunset.'
+    price:650,
+    colors:['#fff08a','#ff6b31'],
+    pattern:'sunspots',
+    feature:'crown',
+    desc:'A living little sun with blazing spots and a radiant crest.'
   }
 
 ];
@@ -1149,7 +1205,7 @@ function todaysShop(){
   const pool =
     SKINS.filter(
       s =>
-        s.id !== 'default'
+        s.price > 0
     );
 
   const picks = [];
@@ -1236,9 +1292,69 @@ function refreshGemDisplays(){
 
 }
 
+function updateAdminButton(){
+  const btn = el('adminBtn');
+  if(!btn) return;
+  btn.classList.toggle('active', !!state.adminMode);
+  btn.textContent = state.adminMode ? 'ADMIN ∞' : 'ADMIN';
+}
+
+el('adminBtn').addEventListener('click', () => {
+  if(state.adminMode){
+    alert('Admin mode is already active. You have unlimited gems.');
+    return;
+  }
+  const password = prompt('Enter admin password:');
+  if(password === '123'){
+    state.adminMode = true;
+    state.gems = 999999999999999;
+    refreshGemDisplays();
+    updateAdminButton();
+    alert('Admin mode activated. You now have unlimited gems.');
+  } else if(password !== null){
+    alert('Incorrect password.');
+  }
+});
+
+updateAdminButton();
+
 /* =========================================================
    SKINS RENDERING
 ========================================================= */
+
+function skinPreviewStyle(s){
+
+  const a = s.colors[0];
+  const b = s.colors[1];
+
+  if(s.pattern === 'stripes'){
+    return `background:repeating-linear-gradient(135deg,${a} 0 10px,${b} 10px 18px);`;
+  }
+
+  if(s.pattern === 'spots'){
+    return `background:radial-gradient(circle at 25% 35%,${b} 0 12%,transparent 13%),radial-gradient(circle at 70% 65%,${b} 0 14%,transparent 15%),linear-gradient(135deg,${a},${a});`;
+  }
+
+  if(s.pattern === 'diamond'){
+    return `background:linear-gradient(45deg,transparent 42%,${b} 43% 57%,transparent 58%),linear-gradient(-45deg,transparent 42%,${b} 43% 57%,transparent 58%),linear-gradient(135deg,${a},${a});background-size:22px 22px;`;
+  }
+
+  if(s.pattern === 'rings'){
+    return `background:repeating-linear-gradient(90deg,${a} 0 13px,${b} 13px 20px);`;
+  }
+
+  if(s.pattern === 'sunspots'){
+    return `background:radial-gradient(circle at 22% 30%,${b} 0 15%,transparent 16%),radial-gradient(circle at 72% 65%,${b} 0 18%,transparent 19%),radial-gradient(circle at 55% 20%,#fff8c7 0 7%,transparent 8%),linear-gradient(135deg,${a},${a});`;
+  }
+
+  if(s.pattern === 'scales'){
+    return `background:radial-gradient(circle at 50% 120%,transparent 0 28%,${b} 29% 34%,transparent 35%),linear-gradient(135deg,${a},${a});`;
+  }
+
+  return `background:linear-gradient(135deg,${a},${b});`;
+
+}
+
 
 function renderSkins(){
 
@@ -1268,14 +1384,7 @@ function renderSkins(){
 
         <div
           class="skin-swatch"
-          style="
-            background:
-            linear-gradient(
-              135deg,
-              ${s.colors[0]},
-              ${s.colors[1]}
-            )
-          "
+          style="${skinPreviewStyle(s)}"
         ></div>
 
         <div class="skin-name">
@@ -1285,6 +1394,8 @@ function renderSkins(){
         <div style="font-size:10px;color:var(--ink-dim);line-height:1.3;margin-bottom:4px;">
           ${s.desc || ''}
         </div>
+
+        ${s.price > 0 ? `<div class="skin-feature">✦ ${s.feature === 'crown' ? 'Crown crest' : s.feature === 'horns' ? 'Abyss horns' : s.feature === 'spikes' ? 'Venom spikes' : s.feature === 'fin' ? 'Ghost fin' : s.feature === 'frills' ? 'Coral frills' : 'Solar crest'}</div>` : ''}
 
         ${
           owned
@@ -1378,7 +1489,7 @@ function renderShop(){
           class="skin-swatch"
           style="
             width:44px;height:34px;flex:none;margin-right:12px;
-            background:linear-gradient(135deg,${item.colors[0]},${item.colors[1]});
+            ${skinPreviewStyle(item)}
           "
         ></div>
 
@@ -1416,12 +1527,16 @@ function renderShop(){
 
             if(
               !owned &&
-              state.gems >= item.price
+              (state.adminMode || state.gems >= item.price)
             ){
 
-              state.gems -= item.price;
+              if(!state.adminMode){
+                state.gems -= item.price;
+              }
 
               state.unlockedSkins.add(item.id);
+
+              state.selectedSkin = item.id;
 
               refreshGemDisplays();
 
@@ -1752,6 +1867,9 @@ el('resetBtn').addEventListener(
 
       state.gems =
         d.gems;
+
+      state.adminMode = false;
+      updateAdminButton();
 
       state.selectedSkin =
         d.selectedSkin;
@@ -2495,8 +2613,13 @@ function makeSnake(
         skinId
       ),
 
+    skinId,
+
     pattern:
       getSkinDef(skinId).pattern,
+
+    feature:
+      getSkinDef(skinId).feature || 'none',
 
     patternSeed:
       rand(0,1000),
@@ -2539,7 +2662,7 @@ function makeSnake(
 
     aggressive:
       !isPlayer &&
-      Math.random()<0.35,
+      Math.random()<0.20,
 
     orbsCollected:0,
 
@@ -2736,7 +2859,7 @@ function updateSnake(
       player &&
       player.alive &&
       distToPlayer <
-      950;
+      650;
 
     const turnStep =
       s.turnRate;
@@ -2783,7 +2906,7 @@ function updateSnake(
 
     else if(isHunting){
 
-      const leadDist = 50;
+      const leadDist = 25;
 
       const leadX =
         player.x +
@@ -2826,7 +2949,7 @@ function updateSnake(
             turnStep,
             diff
           )
-        ) * 1.3;
+        ) * 0.85;
 
     }
 
@@ -2898,8 +3021,8 @@ function updateSnake(
     s.boosting =
       isHunting
         ? (
-            distToPlayer < 320 &&
-            Math.random()<0.02 &&
+            distToPlayer < 220 &&
+            Math.random()<0.005 &&
             currentLength(s)>14
           )
         : (
@@ -2917,13 +3040,18 @@ function updateSnake(
         : 1
     );
 
+  // Keep movement calibrated to 60 FPS on every display.
+  const frameScale = dt * 60;
+
   s.x +=
     Math.cos(s.dir) *
-    spd;
+    spd *
+    frameScale;
 
   s.y +=
     Math.sin(s.dir) *
-    spd;
+    spd *
+    frameScale;
 
   s.segs.unshift({
     x:s.x,
@@ -3584,6 +3712,17 @@ function drawSnake(s){
       fill =
         lerpColor(c1, c2, localT*0.45);
 
+    } else if(pattern === 'rings'){
+
+      fill =
+        (Math.floor(i/2) % 2 === 0)
+          ? c1
+          : c2;
+
+    } else if(pattern === 'sunspots'){
+
+      fill = c1;
+
     }
 
     ctx.beginPath();
@@ -3672,6 +3811,32 @@ function drawSnake(s){
 
       }
 
+    } else if(pattern === 'sunspots'){
+
+      const hashRaw =
+        Math.sin(i*12.9898 + seed*3.7) * 43758.5453;
+
+      const hash =
+        hashRaw - Math.floor(hashRaw);
+
+      if(hash < 0.55){
+
+        ctx.beginPath();
+        ctx.fillStyle = c2;
+        ctx.shadowColor = c2;
+        ctx.shadowBlur = 5;
+        ctx.arc(
+          sx + Math.cos(seed+i)*r*0.25,
+          sy + Math.sin(seed+i*0.7)*r*0.3,
+          r*0.34,
+          0,
+          Math.PI*2
+        );
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+      }
+
     } else if(pattern === 'scales'){
 
       ctx.beginPath();
@@ -3716,6 +3881,75 @@ function drawSnake(s){
   }
 
   ctx.shadowBlur = 0;
+
+  /* Premium head character */
+  const hxFeature =
+    s.segs[0].x -
+    player.x +
+    canvas.width/2;
+
+  const hyFeature =
+    s.segs[0].y -
+    player.y +
+    canvas.height/2;
+
+  if(s.feature && s.feature !== 'none'){
+
+    ctx.save();
+    ctx.translate(hxFeature,hyFeature);
+    ctx.rotate(s.dir);
+    ctx.strokeStyle = c2;
+    ctx.fillStyle = c2;
+    ctx.lineWidth = 2;
+
+    if(s.feature === 'crown'){
+      ctx.beginPath();
+      ctx.moveTo(-s.width*0.45,-s.width*0.55);
+      ctx.lineTo(-s.width*0.2,-s.width*1.05);
+      ctx.lineTo(0,-s.width*0.58);
+      ctx.lineTo(s.width*0.22,-s.width*1.05);
+      ctx.lineTo(s.width*0.48,-s.width*0.55);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if(s.feature === 'horns'){
+      [-1,1].forEach(side => {
+        ctx.beginPath();
+        ctx.moveTo(s.width*0.22,side*s.width*0.34);
+        ctx.quadraticCurveTo(s.width*0.72,side*s.width*0.7,s.width*0.35,side*s.width*0.9);
+        ctx.stroke();
+      });
+    }
+
+    if(s.feature === 'spikes'){
+      for(let q=-1;q<=1;q++){
+        ctx.beginPath();
+        ctx.moveTo(-s.width*0.2+q*s.width*0.35,-s.width*0.38);
+        ctx.lineTo(q*s.width*0.35,-s.width*0.9);
+        ctx.lineTo(s.width*0.18+q*s.width*0.35,-s.width*0.38);
+        ctx.fill();
+      }
+    }
+
+    if(s.feature === 'fin'){
+      ctx.beginPath();
+      ctx.moveTo(-s.width*0.15,-s.width*0.45);
+      ctx.quadraticCurveTo(-s.width*0.7,-s.width*1.1,-s.width*0.55,-s.width*0.05);
+      ctx.quadraticCurveTo(-s.width*0.45,s.width*0.45,-s.width*0.15,s.width*0.45);
+      ctx.fill();
+    }
+
+    if(s.feature === 'frills'){
+      for(let q=-1;q<=1;q++){
+        ctx.beginPath();
+        ctx.arc(s.width*0.12,q*s.width*0.42,s.width*0.25,0,Math.PI*2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
 
   const hx =
     s.segs[0].x -
@@ -4073,8 +4307,9 @@ function updateLeaderboard(){
    GAME LOOP
 ========================================================= */
 
-let lastT =
-  performance.now();
+const FIXED_DT = 1 / 60;
+let lastT = performance.now();
+let accumulator = 0;
 
 function loop(){
 
@@ -4082,63 +4317,40 @@ function loop(){
     return;
   }
 
-  const now =
-    performance.now();
+  const now = performance.now();
+  let elapsed = (now - lastT) / 1000;
+  lastT = now;
 
-  const dt =
-    Math.min(
-      0.05,
-      (now-lastT) / 1000
-    );
+  // The game simulation is locked to 60 updates per second.
+  elapsed = Math.min(elapsed, 0.25);
+  accumulator += elapsed;
 
-  lastT =
-    now;
+  while(accumulator >= FIXED_DT){
 
-  for(
-    const s of snakes
-  ){
-
-    updateSnake(
-      s,
-      dt
-    );
-
-  }
-
-  for(
-    const s of snakes
-  ){
-
-    if(s.alive){
-      feedCheck(s);
+    for(const s of snakes){
+      updateSnake(s, FIXED_DT);
     }
 
-  }
+    for(const s of snakes){
+      if(s.alive){
+        feedCheck(s);
+      }
+    }
 
-  checkCollisions();
+    checkCollisions();
 
-  if(
-    food.length <
-    FOOD_COUNT
-  ){
+    if(food.length < FOOD_COUNT){
+      spawnFood(FOOD_COUNT - food.length);
+    }
 
-    spawnFood(
-      FOOD_COUNT -
-      food.length
-    );
+    respawnAIIfNeeded();
 
-  }
+    accumulator -= FIXED_DT;
 
-  respawnAIIfNeeded();
-
-  if(
-    !player.alive
-  ){
-
-    endGame();
-
-    return;
-
+    if(!player.alive){
+      endGame();
+      return;
+    }
   }
 
   ctx.clearRect(
@@ -4149,53 +4361,25 @@ function loop(){
   );
 
   drawGrid();
-
   drawBoundary();
-
   drawFood();
-
   drawGems();
 
-  for(
-    const s of snakes
-  ){
-
-    if(
-      s.alive &&
-      s !== player
-    ){
-
+  for(const s of snakes){
+    if(s.alive && s !== player){
       drawSnake(s);
-
     }
-
   }
 
   drawSnake(player);
 
-  el('lenHud').textContent =
-    player.segs.length;
-
-  el('lenHud')
-    .classList
-    .toggle(
-      'boosting',
-      player.boosting
-    );
-
-  el('boostTag')
-    .classList
-    .toggle(
-      'show',
-      player.boosting
-    );
+  el('lenHud').textContent = player.segs.length;
+  el('lenHud').classList.toggle('boosting', player.boosting);
+  el('boostTag').classList.toggle('show', player.boosting);
 
   updateLeaderboard();
 
-  requestAnimationFrame(
-    loop
-  );
-
+  requestAnimationFrame(loop);
 }
 
 /* =========================================================
@@ -4292,12 +4476,10 @@ function startGame(){
 
   running = true;
 
-  lastT =
-    performance.now();
+  lastT = performance.now();
+  accumulator = 0;
 
-  requestAnimationFrame(
-    loop
-  );
+  requestAnimationFrame(loop);
 
 }
 
